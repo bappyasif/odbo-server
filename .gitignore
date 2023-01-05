@@ -1,0 +1,5 @@
+node_modules
+*-lock.json
+*docs
+.env
+id_rsa_priv.pem
