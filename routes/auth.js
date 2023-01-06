@@ -51,9 +51,11 @@ authRoutes.get('/auth/twitter/redirect', passport.authenticate('twitter', {
     successRedirect: `${baseUrlForAuth}/login/success`
 }));
 
-authRoutes.get("/login/success", isAuthenticated, returnAuthenticatedUser)
+// authRoutes.get("/login/success", isAuthenticated, returnAuthenticatedUser)
+authRoutes.get("/login/success", returnAuthenticatedUser)
 
-authRoutes.get("/logout", isAuthenticated, logoutUser)
+// authRoutes.get("/logout", isAuthenticated, logoutUser)
+authRoutes.get("/logout", logoutUser)
 
 authRoutes.get("/protected", authenticatedUserJwtVerification, extractDataForAnAuthenticatedUser)
 
