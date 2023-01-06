@@ -10,6 +10,8 @@ const path = require("path");
 const fs = require("fs");
 const User = require("../models/user");
 
+const baseUrlForAuth = "https://busy-lime-dolphin-hem.cyclic.app"
+
 let findOrCreateuser = (profileName, profileId, userData, done) => {
     User.findOne({ [profileName]: profileId })
         .then(currentUser => {
@@ -63,7 +65,7 @@ let strategyUserDataGenerations = (profileData, whichStrategy) => {
 
 let strategyOptions = {
     // options for google strategy
-    callbackURL: "/auth/google/redirect",
+    callbackURL: `${baseUrlForAuth}/auth/google/redirect`,
     clientID: process.env.GOOGLE_PLUS_CLIENT_ID,
     clientSecret: process.env.GOOGLE_PLUS_CLIENT_SECRET
 }
@@ -81,7 +83,7 @@ let googleStrategy = new GoogleStrategy(strategyOptions, strategyCallback);
 let fbStrategyOptions = {
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: "http://localhost:3000/auth/facebook/redirect",
+    callbackURL: `${baseUrlForAuth}/auth/facebook/redirect`,
     profileFields: ['id', 'emails', 'name']
 }
 
@@ -99,7 +101,7 @@ let fbStrategy = new FacebookStrategy(fbStrategyOptions, fbStrategyCallback);
 let githubStrategyOptions = {
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/github/redirect",
+    callbackURL: `${baseUrlForAuth}/auth/github/redirect`,
 }
 
 let githubStrategyCallback = (accessToken, refreshToken, profileData, done) => {
@@ -115,10 +117,7 @@ let githubStrategy = new GitHubStrategy(githubStrategyOptions, githubStrategyCal
 let twitterStrategyOptions = {
     consumerKey: process.env.TWITTER_CONSUMER_KEY,
     consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-    // consumerKey: process.env.TWITTER_CLIENT_ID,
-    // consumerSecret: process.env.TWITTER_CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/twitter/redirect",
-    // profileFields: ['id', 'emails', 'name']
+    callbackURL: `${baseUrlForAuth}/auth/twitter/redirect`,
 }
 
 let twitterStrategyCallback = (accessToken, refreshToken, profileData, done) => {
