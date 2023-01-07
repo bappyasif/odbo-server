@@ -142,7 +142,7 @@ const authenticatedUserJwtVerification = (req, res, next) => {
     const bearerText = tokenParts[0]
     const tokenString = tokenParts[1];
 
-    console.log(bearerText, tokenString)
+    // console.log(bearerText, tokenString)
 
     if(bearerText === "Bearer" && tokenString.match(/\S+\.\S+\.\S+/)) {
         try {
@@ -162,7 +162,7 @@ const authenticatedUserJwtVerification = (req, res, next) => {
 const extractDataForAnAuthenticatedUser = (req, res, next) => {
     User.findOne({_id: req.jwt.sub})
         .then(dataset => {
-            console.log(dataset, "dataset!!")
+            // console.log(dataset, "dataset!!")
             res.status(201).json({msg: "user data has been transported after JWT verficiation", user: dataset})
         }).catch(err => {
             console.log(err)

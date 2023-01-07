@@ -3,9 +3,9 @@ const express = require("express");
 const { registerUser, loginUser, logoutUser, returnAuthenticatedUser, loginWithOauthProvider, extractDataForAnAuthenticatedUser, authenticatedUserJwtVerification } = require("../controllers/auth");
 const authRoutes = express();
 
-const baseUrlForAuth = "http://localhost:3001"
+// const baseUrlForAuth = "http://localhost:3001"
 
-// const baseUrlForAuth = "https://odbo-live.vercel.app"
+const baseUrlForAuth = "https://odbo-live.vercel.app"
 
 let isAuthenticated = (req, res, next) => {
     if (req.user || req?.session?.passport?.user || req?.jwt) {
@@ -51,11 +51,11 @@ authRoutes.get('/auth/twitter/redirect', passport.authenticate('twitter', {
     successRedirect: `${baseUrlForAuth}/login/success`
 }));
 
-// authRoutes.get("/login/success", isAuthenticated, returnAuthenticatedUser)
-authRoutes.get("/login/success", returnAuthenticatedUser)
+authRoutes.get("/login/success", isAuthenticated, returnAuthenticatedUser)
+// authRoutes.get("/login/success", returnAuthenticatedUser)
 
-// authRoutes.get("/logout", isAuthenticated, logoutUser)
-authRoutes.get("/logout", logoutUser)
+authRoutes.get("/logout", isAuthenticated, logoutUser)
+// authRoutes.get("/logout", logoutUser)
 
 authRoutes.get("/protected", authenticatedUserJwtVerification, extractDataForAnAuthenticatedUser)
 
