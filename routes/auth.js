@@ -3,11 +3,11 @@ const express = require("express");
 const { registerUser, loginUser, logoutUser, returnAuthenticatedUser, loginWithOauthProvider, extractDataForAnAuthenticatedUser, authenticatedUserJwtVerification } = require("../controllers/auth");
 const authRoutes = express();
 
-// const baseUrlForAuth = "http://localhost:3001"
+const baseUrlForAuth = "http://localhost:3001"
 
-const baseUrlForAuth = "https://odbo-live.vercel.app"
+// const baseUrlForAuth = "https://odbo-live.vercel.app"
 
-let isAuthenticated = (req, res, next) => {
+export let isAuthenticated = (req, res, next) => {
     if (req.user || req?.session?.passport?.user || req?.jwt) {
         console.log("user authenticated!!")
         next()
