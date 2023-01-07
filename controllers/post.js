@@ -71,7 +71,7 @@ const getAllPostsWithPublicPrivacy = (req, res, next) => {
         },
 
         (err, results) => {
-            if (err) return next(err);
+            if (err) return res.status(403).json({success:false, msg: "error occured while getting all posts from server"});
             res.status(200).json({ success: true, data: [...results.emptyPrivacy, ...results.everybodyPrivacy] })
         }
     )

@@ -3,11 +3,11 @@ const jsonwebtoken = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 
-const pathToPrivKey = path.join(__dirname, "..", "id_rsa_priv.pem");
-const PRIVATE_KEY = fs.readFileSync(pathToPrivKey, "utf-8");
+// const pathToPrivKey = path.join(__dirname, "..", "id_rsa_priv.pem");
+// const PRIVATE_KEY = fs.readFileSync(pathToPrivKey, "utf-8");
 
-const pathToPubKey = path.join(__dirname, "..", "id_rsa_pub.pem");
-const PUBLIC_KEY = fs.readFileSync(pathToPubKey, "utf-8");
+// const pathToPubKey = path.join(__dirname, "..", "id_rsa_pub.pem");
+// const PUBLIC_KEY = fs.readFileSync(pathToPubKey, "utf-8");
 
 // This function uses the crypto library to decrypt the hash using the salt and then compares
 // the decrypted hash/salt with the password that the user provided at login
