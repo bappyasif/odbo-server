@@ -28,6 +28,8 @@ const generatePassword = (password) => {
     }
 }
 
+
+
 // JWT ISSUANCE, so that when time arrives we can take this signed token via private key and get it verified with our public key
 // We need this(user) to set the JWT `sub` payload property to the MongoDB user ID
 const issueJWT = (user) => {
@@ -42,10 +44,14 @@ const issueJWT = (user) => {
 
     const options = {
         expiresIn,
-        algorithm: "RS256"
+        // algorithm: "RS256"
     }
 
-    const signedToken = jsonwebtoken.sign(payload, PRIVATE_KEY, options)
+
+    const signedToken = jsonwebtoken.sign(payload, process.env.JWT_SECRET_TOKEN, options)
+
+    // const signedToken = jsonwebtoken.sign(payload, PRIVATE_KEY, options)
+    // const signedToken = jsonwebtoken.sign(payload, process.env.CRYPTO_PRIV_KEY, options)
 
     return {
         token: `Bearer ${signedToken}`,
@@ -54,8 +60,9 @@ const issueJWT = (user) => {
 }
 
 const verifyJWT = (tokenString) => {
-    const verification = jsonwebtoken.verify(tokenString, PUBLIC_KEY, { algorithms: ["RS256"] })
-    return verification;    
+    const verification = jsonwebtoken.verify(tokenString, process.env.JWT_SECRET_TOKEN)
+    // const verification = jsonwebtoken.verify(tokenString, PUBLIC_KEY, { algorithms: ["RS256"] })
+    return verification;
 }
 
 module.exports = {

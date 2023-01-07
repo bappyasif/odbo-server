@@ -7,7 +7,7 @@ const baseUrlForAuth = "http://localhost:3001"
 
 // const baseUrlForAuth = "https://odbo-live.vercel.app"
 
-export let isAuthenticated = (req, res, next) => {
+let isAuthenticated = (req, res, next) => {
     if (req.user || req?.session?.passport?.user || req?.jwt) {
         console.log("user authenticated!!")
         next()
@@ -59,4 +59,7 @@ authRoutes.get("/logout", logoutUser)
 
 authRoutes.get("/protected", authenticatedUserJwtVerification, extractDataForAnAuthenticatedUser)
 
-module.exports = authRoutes
+module.exports = {
+    authRoutes,
+    isAuthenticated
+}

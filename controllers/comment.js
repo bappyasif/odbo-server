@@ -16,7 +16,7 @@ const getSoloComment = (req, res, next) => {
 }
 
 const getAllCommentsFromSinglePost = (req, res, next) => {
-    console.log(req.params.postId, "req.params.postId")
+    // console.log(req.params.postId, "req.params.postId")
     Comment.find({ postId: req.params.postId })
         .then(result => {
             res.status(200).json({ success: true, data: result })

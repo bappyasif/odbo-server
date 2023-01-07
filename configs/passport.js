@@ -11,6 +11,7 @@ const fs = require("fs");
 const User = require("../models/user");
 
 const baseUrlForAuth = "https://busy-lime-dolphin-hem.cyclic.app"
+// const baseUrlForAuth = "http://localhost:3000"
 
 let findOrCreateuser = (profileName, profileId, userData, done) => {
     User.findOne({ [profileName]: profileId })
