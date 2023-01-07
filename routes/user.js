@@ -1,10 +1,11 @@
 const express = require("express");
-const { getAllUsers, getAnUser, updateUser, deleteUser, acceptUserFriendRequest, rejectUserFriendRequest, removeUserFromFriendList, updateUserProfileInfo } = require("../controllers/user");
+const { getAllUsers, getAnUser, updateUser, deleteUser, acceptUserFriendRequest, rejectUserFriendRequest, removeUserFromFriendList, updateUserProfileInfo, getAnUserWithMinimumData } = require("../controllers/user");
 const { isAuthenticated } = require("./auth");
 const userRoutes = express();
 
 userRoutes.get("/", isAuthenticated, getAllUsers)
-userRoutes.get("/:userId", getAnUser)
+userRoutes.get("/:userId/publicPayload", getAnUserWithMinimumData);
+userRoutes.get("/:userId", isAuthenticated, getAnUser)
 
 userRoutes.put("/:userId/profile", isAuthenticated, updateUserProfileInfo)
 userRoutes.put("/:userId", isAuthenticated, updateUser)

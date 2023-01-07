@@ -10,6 +10,19 @@ const getAllUsers = (req, res, next) => {
         }).catch(err => next(err))
 }
 
+const getAnUserWithMinimumData = (req, res, next) => {
+    User.findById({ _id: req.params.userId })
+        .then(result => {
+            const payload = {
+                ppUrl: result.ppUrl || "https://random.imagecdn.app/500/150",
+                fullName: result.fullName,
+                created: result.created,
+                _id: result._id
+            }
+            res.status(200).json({ success: true, data: payload })
+        }).catch(err => next(err))
+}
+
 const getAnUser = (req, res, next) => {
     User.findById({ _id: req.params.userId })
         .then(result => {
@@ -201,5 +214,6 @@ module.exports = {
     getAllUsers,
     getAnUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getAnUserWithMinimumData
 }
