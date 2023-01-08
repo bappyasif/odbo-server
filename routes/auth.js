@@ -13,7 +13,8 @@ let isAuthenticated = (req, res, next) => {
         next()
     } else {
         console.log("authentication error")
-        res.status(401).json({success: false, data: [], msg: "not authenticated"})
+        next()
+        // res.status(401).json({success: false, data: [], msg: "not authenticated"})
     }
 }
 
