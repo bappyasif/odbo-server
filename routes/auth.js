@@ -18,8 +18,14 @@ const isAuth = (req, res, next) => {
 }
 
 router.get("/login/success", (req, res) => {
+    
+    // Alphanumeric ID that gets written to the cookie.
+    // It's also the SESSION_ID portion in 's:{SESSION_ID}.{SIGNATURE}'.
+    console.log(req.session?.id, req.sessionID, req?.user?.id, "req.user!!")
 
-    console.log(req.session?.id, req?.user?.id, "req.user!!", req?.session?.passport?.user.id, req.isAuthenticated(), req.cookies)
+    // Unless a valid session ID cookie is sent with the request
+    // the session ID below will be different for each request
+    console.log("more checks", req?.session?.passport?.user, req.isAuthenticated(), req.cookies)
 
     // const user = req?.session?.passport?.user;
     const user = req.user
@@ -76,11 +82,11 @@ function cookieJwtTokenAuth(req, res, next) {
     console.log(Boolean(token), Boolean(refreshToken))
     const user = verifyJwtAccessToken(token, refreshToken)
 
-    if(user) {
+    if (user) {
         req.user = user;
     }
 
-    if(!req.user) return res.status(401).json({ msg: "authentication failed" })
+    if (!req.user) return res.status(401).json({ msg: "authentication failed" })
 
     next();
 }
