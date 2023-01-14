@@ -19,10 +19,10 @@ const isAuth = (req, res, next) => {
 
 router.get("/login/success", (req, res) => {
 
-    console.log(req.session.id, req?.user?.id, "req.user!!", req?.session?.passport?.user.id, req.isAuthenticated(), req.cookies)
+    console.log(req.session?.id, req?.user?.id, "req.user!!", req?.session?.passport?.user.id, req.isAuthenticated(), req.cookies)
 
-    const user = req?.session?.passport?.user;
-    // const user = req.user
+    // const user = req?.session?.passport?.user;
+    const user = req.user
 
     if (user) {
         // we can intentioanlly change session data if we need to and later on check on it when

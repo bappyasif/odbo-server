@@ -10,6 +10,7 @@ const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const authRoute = require("./routes/auth");
 const authEpRoute = require("./routes/auth-ep");
+const USER = require("./serializers");
 const app = express();
 
 // creating session store for users in db
@@ -41,6 +42,11 @@ app.use(express.json());
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// rather using serializer and de serializer beforehand 
+// passport.initialize() and passport.session() middlewares need to attach to your express app instance before you define serialize and deserialize
+passport.serializeUser(USER.serialize)
+passport.deserializeUser(USER.deserialize)
 
 app.use(
     cors({
