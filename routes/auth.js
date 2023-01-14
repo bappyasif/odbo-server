@@ -21,7 +21,7 @@ router.get("/login/success", (req, res) => {
 
     console.log(req.session.id, req?.user?.id, "req.user!!", req?.session?.passport?.user.id, req.isAuthenticated(), req.cookies)
 
-    const user = req?.session?.passport?.user.id;
+    const user = req?.session?.passport?.user;
     // const user = req.user
 
     if (user) {
