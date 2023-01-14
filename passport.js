@@ -9,6 +9,7 @@ const findOrCreateUser = async (profile, done) => {
   const user = await User.findOne({ id: profile.id })
   if (user) {
     console.log("user found", user)
+    done(null, user);
   } else {
     console.log("user is not found")
     const newuser = new User({
@@ -16,10 +17,13 @@ const findOrCreateUser = async (profile, done) => {
       id: profile.id,
       password: "password"
     })
-    newuser.save().then(() => console.log("user created")).catch(err=> console.log("save error....", err))
+    newuser.save().then((newUser) => {
+      console.log("user created")
+      done(null, newUser);
+    }).catch(err=> console.log("save error....", err))
   }
-  console.log(profile, "PROFILE!!")
-  done(null, profile);
+  console.log(profile?.id, "PROFILE!!")
+  // done(null, profile);
 }
 
 passport.use(
@@ -40,7 +44,7 @@ passport.use(
 
 // these serialize or deserialize functions are used when Sessions are in use
 passport.serializeUser((user, done) => {
-  console.log(user.id, "serialize", user)
+  console.log(user.id, "serialize")
   // whatever we will serialize thats what is going to be deserilize later on with deserlizer function
   done(null, user)
   // here we can grab user id or some unique key that will help us locate user identity from our records or db
@@ -50,7 +54,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((user /*|| id*/, done) => {
   // console.log(cookieStr, "de-serialize")
-  console.log(user.id, "de-serialize", user)
+  console.log(user.id, "de-serialize")
   User.findOne({id: user.id}).then((foundUser) => done(null, foundUser))
   // done(null, cookieStr)
   // if it returns a unique id which we might have stored in a db potentially

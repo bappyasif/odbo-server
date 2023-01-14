@@ -9,7 +9,7 @@ const router = express();
 const CLIENT_URL = "https://odbo-live.vercel.app"
 
 const isAuth = (req, res, next) => {
-    if (req.session.isAuth) {
+    if (req.session.isAuth || req.isAuthenticated()) {
         next()
     } else {
         console.log("user is not authenticated")
@@ -19,15 +19,19 @@ const isAuth = (req, res, next) => {
 
 router.get("/login/success", (req, res) => {
 
-    console.log(req.session.id, "req.user!!", req?.session?.passport?.user.id, req.isAuthenticated(), req.cookies)
+    console.log(req.session.id, req?.user?.id, "req.user!!", req?.session?.passport?.user.id, req.isAuthenticated(), req.cookies)
 
-    if (req.user) {
+    const user = req?.session?.passport?.user.id;
+    // const user = req.user
+
+    if (user) {
         // we can intentioanlly change session data if we need to and later on check on it when
         req.session.isAuth = true
 
         // console.log(req.session.id, 'sessionid') // this will match with browser stored session sub string value
 
-        const token = generateJwtAccessToken(req.user);
+        // const token = generateJwtAccessToken(req.user);
+        const token = generateJwtAccessToken(user);
 
         // const token = jwt.sign(req.user, process.env.JWT_SECRET, { expiresIn: '30s' })
 
@@ -37,7 +41,8 @@ router.get("/login/success", (req, res) => {
         res.cookie("token", token, { httpOnly: true })
 
         // saving refresh token in session as well
-        const refreshToken = generateJwtRefreshToken(req.user);
+        // const refreshToken = generateJwtRefreshToken(req.user);
+        const refreshToken = generateJwtRefreshToken(user);
 
         // keeping it in cookie
         res.cookie("refreshToken", refreshToken, { httpOnly: true });
@@ -46,7 +51,8 @@ router.get("/login/success", (req, res) => {
 
         res.status(200).json({
             msg: "login successfull!!",
-            user: req.user,
+            user: user,
+            // user: req.user,
             cookies: req.cookies,
             // jwt: req.jwt
         })
@@ -91,7 +97,7 @@ router.get("/newToken", (req, res) => {
 })
 
 router.get("/logout", isAuth, (req, res) => {
-    console.log(req.session.passport?.user?.id, req.session.id)
+    console.log(req.session.passport?.user?.id, req.session.id, "from logout!!")
 
     res.clearCookie("token");
 
