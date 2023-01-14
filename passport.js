@@ -11,14 +11,14 @@ const findOrCreateUser = async (profile, done) => {
     console.log("user found", user)
     done(null, user);
   } else {
-    console.log("user is not found")
+    // console.log("user is not found")
     const newuser = new User({
       name: profile.displayName,
       id: profile.id,
       password: "password"
     })
     newuser.save().then((newUser) => {
-      console.log("user created")
+      console.log("new user is created", newUser)
       done(null, newUser);
     }).catch(err=> console.log("save error....", err))
   }
