@@ -5,7 +5,7 @@ const User = require("./models/user");
 const callbackRoute = "https://busy-lime-dolphin-hem.cyclic.app";
 // const callbackRoute = "http://localhost:4000"
 
-const findOrCreateUser = async (profile) => {
+const findOrCreateUser = async (profile, done) => {
   const user = await User.findOne({ id: profile.id })
   if (user) {
     console.log("user found", user)
@@ -18,6 +18,8 @@ const findOrCreateUser = async (profile) => {
     })
     newuser.save().then(() => console.log("user created")).catch(err=> console.log("save error....", err))
   }
+  console.log(profile, "PROFILE!!")
+  done(null, profile);
 }
 
 passport.use(
@@ -29,15 +31,16 @@ passport.use(
       // callbackURL: "/auth/google/callback",
     },
     function (accessToken, refreshToken, profile, done) {
-      findOrCreateUser(profile);
-      done(null, profile);
+      findOrCreateUser(profile, done);
+      // findOrCreateUser(profile);
+      // done(null, profile);
     }
   )
 );
 
 // these serialize or deserialize functions are used when Sessions are in use
 passport.serializeUser((user, done) => {
-  console.log(user.id, "serialize")
+  console.log(user.id, "serialize", user)
   // whatever we will serialize thats what is going to be deserilize later on with deserlizer function
   done(null, user)
   // here we can grab user id or some unique key that will help us locate user identity from our records or db
@@ -45,10 +48,11 @@ passport.serializeUser((user, done) => {
   // e.g. done(null, user.id)
 })
 
-passport.deserializeUser((cookieStr /*|| id*/, done) => {
+passport.deserializeUser((user /*|| id*/, done) => {
   // console.log(cookieStr, "de-serialize")
-  console.log(cookieStr.id, "de-serialize")
-  done(null, cookieStr)
+  console.log(user.id, "de-serialize", user)
+  User.findOne({id: user.id}).then((foundUser) => done(null, foundUser))
+  // done(null, cookieStr)
   // if it returns a unique id which we might have stored in a db potentially
   // we can use that id to look it up in our database to locate and grab that user info from db  
   /**
