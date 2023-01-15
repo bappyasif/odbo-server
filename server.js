@@ -28,9 +28,11 @@ const store = new MongoSession({
 
 app.use(cors({
     origin: [CLIENT_BASE_URL],
-    methods: "GET,POST,PUT,DELETE",
+    // methods: "GET,POST,PUT,DELETE",
     credentials: true,
 }))
+
+app.set("trust proxy", 1);
 
 app.use(session({
     store,
@@ -40,7 +42,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET_KEYS,
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
-        sameSite: "none",
+        // sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24
     }
@@ -86,11 +88,11 @@ passport.serializeUser((user, done) => {
 })
 
 passport.deserializeUser((profileId, done) => {
-    console.log(profileId, "deserialixe")
+    console.log(profileId, "deserialize")
     User.findOne({ profileId: profileId }, (err, user) => {
         if (err) return done(err, null)
         done(null, user)
-        console.log(user, "from deserializer")
+        console.log(user, "deserializer cb")
     })
 })
 
