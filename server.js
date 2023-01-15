@@ -36,6 +36,10 @@ const store = new MongoSession({
 //     // now we can store it in opur session as well
 //     store: store
 // }));
+
+// no idea why am i doing this but seems like its a proxy setup
+app.set("trust proxy", 1)
+
 app.use(expressSession({
      // Defaults to MemoryStore, meaning sessions are stored as POJOs
     // in server memory, and are wiped out when the server restarts.
@@ -103,7 +107,8 @@ app.use(expressSession({
       // with cross-site requests. Used to mitigate CSRF. Possible values are
       // 'strict' (or true), 'lax', and false (to NOT set SameSite attribute).
       // It only works in newer browsers, so CSRF prevention is still a concern.
-    //   sameSite: "none",
+      sameSite: "none",
+      secure: true
     }
 }))
 // middleware to read cookies
