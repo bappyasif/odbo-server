@@ -28,7 +28,7 @@ const store = new MongoSession({
 
 app.use(cors({
     origin: [CLIENT_BASE_URL],
-    // methods: "GET,POST,PUT,DELETE",
+    methods: "GET,POST,PUT,DELETE",
     credentials: true,
 }))
 
@@ -42,8 +42,8 @@ app.use(session({
     secret: process.env.SESSION_SECRET_KEYS,
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
-        sameSite: "none",
-        secure: true,
+        // sameSite: "none",
+        // secure: true,
         maxAge: 1000 * 60 * 60 * 24
     }
 }))
