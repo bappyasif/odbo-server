@@ -5,8 +5,8 @@ const { generateJwtAccessToken, verifyJwtAccessToken, generateJwtRefreshToken, v
 
 const router = express();
 
-// const CLIENT_URL = "http://localhost:3000"
-const CLIENT_URL = "https://odbo-live.vercel.app"
+const CLIENT_URL = "http://localhost:3000"
+// const CLIENT_URL = "https://odbo-live.vercel.app"
 
 const isAuth = (req, res, next) => {
     if (req.session.isAuth || req.isAuthenticated()) {

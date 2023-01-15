@@ -1,139 +1,129 @@
 require("dotenv").config();
-require("./passport");
-require("./db");
-const expressSession = require("express-session");
-const MongoSession = require("connect-mongodb-session")(expressSession);
-const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
+const express = require("express");
 const cookieParser = require("cookie-parser");
-// const passportSetup = require("./passport");
+const session = require("express-session");
+const MongoSession = require("connect-mongodb-session")(session)
 const passport = require("passport");
-const authRoute = require("./routes/auth");
-const authEpRoute = require("./routes/auth-ep");
-const USER = require("./serializers");
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
+const User = require("./model/user");
 const app = express();
 
-// creating session store for users in db
+// const REDIRECT_BASE_URL = "http://localhost:4000"
+// const CLIENT_BASE_URL = "http://localhost:3000"
+
+const REDIRECT_BASE_URL = "https://busy-lime-dolphin-hem.cyclic.app"
+const CLIENT_BASE_URL = "https://odbo-live.vercel.app"
+
+mongoose.connect(process.env.DB_STR, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log("database conected")).catch(err => console.log("database error!!", err));
+
 const store = new MongoSession({
     uri: process.env.DB_STR,
     collection: "userSessions"
-})
+});
 
-// resaving cookie as im not currently using mongodb, otherwise i would have kept it as false
-// app.use(
-//     cookieSession({ name: "session", secret: process.env.SESSION_SECRET_KEYS, maxAge: 24 * 60 * 60 * 100, resave: true })
-// );
-// app.use(expressSession({
-//     name: "session",
-//     secret: process.env.SESSION_SECRET_KEYS,
-//     maxAge: 100 * 60 * 60 * 24,
-//     resave: true,
-//     // these two options were causing session and authentication to be not false rather its was not showing up on broswer cookie when set to False
-//     // we can anytime add options and values to session from any requests to edit and change its value 
-//     saveUninitialized: false,
-//     // cookie: { secure: true }
+app.use(cors({
+    origin: [CLIENT_BASE_URL],
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true,
+}))
 
-//     // now we can store it in opur session as well
-//     store: store
-// }));
-
-// no idea why am i doing this but seems like its a proxy setup
-app.set("trust proxy", 1)
-
-app.use(expressSession({
-     // Defaults to MemoryStore, meaning sessions are stored as POJOs
-    // in server memory, and are wiped out when the server restarts.
+app.use(session({
     store,
-
-    // Name for the session ID cookie. Defaults to 'connect.sid'.
-    name: 'session',
-
-    // Whether to force-save unitialized (new, but not modified) sessions
-    // to the store. Defaults to true (deprecated). For login sessions, it
-    // makes no sense to save empty sessions for unauthenticated requests,
-    // because they are not associated with any valuable data yet, and would
-    // waste storage. We'll only save the new session once the user logs in.
+    name: "sessionID",
     saveUninitialized: false,
-
-    // Whether to force-save the session back to the store, even if it wasn't
-    // modified during the request. Default is true (deprecated). We don't
-    // need to write to the store if the session didn't change.
     resave: false,
-
-    // Whether to force-set a session ID cookie on every response. Default is
-    // false. Enable this if you want to extend session lifetime while the user
-    // is still browsing the site. Beware that the module doesn't have an absolute
-    // timeout option (see https://github.com/expressjs/session/issues/557), so
-    // you'd need to handle indefinite sessions manually.
-    // rolling: false,
-
-    // Secret key to sign the session ID. The signature is used
-    // to validate the cookie against any tampering client-side.
     secret: process.env.SESSION_SECRET_KEYS,
-
-    // Settings object for the session ID cookie. The cookie holds a
-    // session ID ref in the form of 's:{SESSION_ID}.{SIGNATURE}' for example:
-    // s%3A9vKnWqiZvuvVsIV1zmzJQeYUgINqXYeS.nK3p01vyu3Zw52x857ljClBrSBpQcc7OoDrpateKp%2Bc
-
-    // It is signed and URL encoded, but NOT encrypted, because session ID is
-    // merely a random string that serves as a reference to the session. Even
-    // if encrypted, it still maintains a 1:1 relationship with the session.
-    // OWASP: cookies only need to be encrypted if they contain valuable data.
-    // See https://github.com/expressjs/session/issues/468
-
     cookie: {
-
-      // Path attribute in Set-Cookie header. Defaults to the root path '/'.
-      // path: '/',
-
-      // Domain attribute in Set-Cookie header. There's no default, and
-      // most browsers will only apply the cookie to the current domain.
-      // domain: null,
-
-      // HttpOnly flag in Set-Cookie header. Specifies whether the cookie can
-      // only be read server-side, and not by JavaScript. Defaults to true.
-      // httpOnly: true,
-
-      // Expires attribute in Set-Cookie header. Set with a Date object, though
-      // usually maxAge is used instead. There's no default, and the browsers will
-      // treat it as a session cookie (and delete it when the window is closed).
-      // expires: new Date(...)
-
-      // Preferred way to set Expires attribute. Time in milliseconds until
-      // the expiry. There's no default, so the cookie is non-persistent.
-      maxAge: 1000 * 60 * 60 * 2,
-
-      // SameSite attribute in Set-Cookie header. Controls how cookies are sent
-      // with cross-site requests. Used to mitigate CSRF. Possible values are
-      // 'strict' (or true), 'lax', and false (to NOT set SameSite attribute).
-      // It only works in newer browsers, so CSRF prevention is still a concern.
-      sameSite: "none",
-      secure: true
+        // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
+        sameSite: "none",
+        secure: true,
+        maxAge: 1000 * 60 * 60 * 24
     }
 }))
-// middleware to read cookies
-app.use(cookieParser());
-app.use(express.json());
 
+app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 
-// rather using serializer and de serializer beforehand 
-// passport.initialize() and passport.session() middlewares need to attach to your express app instance before you define serialize and deserialize
-passport.serializeUser(USER.serialize)
-passport.deserializeUser(USER.deserialize)
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${REDIRECT_BASE_URL}/auth/google/callback`
+},
+    function (accessToken, refreshToken, profile, cb) {
+        User.findOne({ profileId: profile.id }, (err, user) => {
+            if (err) return cb(err, null)
+            if (user) {
+                console.log("user found!! already existing!!")
+                return cb(null, user)
+            } else {
+                console.log("create new")
+                const newUser = new User({
+                    name: profile.displayName,
+                    profileId: profile.id
+                });
 
-app.use(
-    cors({
-        origin: ["http://localhost:3000", "https://odbo-live.vercel.app"],
-        methods: "GET,POST,PUT,DELETE",
-        credentials: true,
+                newUser.save().then(createdUser => {
+                    console.log("created User", createdUser)
+                    return cb(null, user)
+                }).catch(err => {
+                    console.log("create user thrown error")
+                    cb(err, null)
+                })
+            }
+        })
+    }
+));
+
+passport.serializeUser((user, done) => {
+    console.log(user.profileId, "from serializer")
+    done(null, user.profileId)
+})
+
+passport.deserializeUser((profileId, done) => {
+    console.log(profileId, "deserialixe")
+    User.findOne({ profileId: profileId }, (err, user) => {
+        if (err) return done(err, null)
+        done(null, user)
+        console.log(user, "from deserializer")
     })
-);
+})
 
-app.use("/auth", authRoute);
-app.use("/ep-auth", authEpRoute);
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile'] }));
 
-app.listen("4000", () => {
-    console.log("Server is running!");
-});
+app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    function (req, res) {
+        // Successful authentication, redirect home.
+        res.redirect(CLIENT_BASE_URL);
+    });
+
+const isAuth = (req, res, next) => {
+    console.log(req.sessionID, "!!", req.cookies)
+    if (req.user) {
+        next()
+    } else {
+        res.status(401).json({ msg: "authentication failed!!" })
+    }
+}
+
+app.get("/login/success", isAuth, (req, res) => {
+    res.status(200).json({ msg: "successful authentication", user: req.user })
+})
+
+app.get("/logout", (req, res) => {
+    req.logOut(err => {
+        if (err) return res.status(401).json({ msg: "logout failed!!" })
+        return res.redirect(`${CLIENT_BASE_URL}/`)
+    });
+    //   res.redirect(CLIENT_BASE_URL);
+    //   res.status(200).json({msg: "successfull logout"})
+})
+
+app.listen(4000, () => console.log("server is running on 4000"))

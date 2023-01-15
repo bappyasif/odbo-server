@@ -2,8 +2,8 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require("./models/user");
 
-const callbackRoute = "https://busy-lime-dolphin-hem.cyclic.app";
-// const callbackRoute = "http://localhost:4000"
+// const callbackRoute = "https://busy-lime-dolphin-hem.cyclic.app";
+const callbackRoute = "http://localhost:4000"
 
 const findOrCreateUser = async (profile, done) => {
   const user = await User.findOne({ id: profile.id })
