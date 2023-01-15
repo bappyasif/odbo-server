@@ -15,10 +15,10 @@ const user = {
         // using db id for this deserialization process
         User.findById(userId, (err, user) => {
             if(err){
-                done(null, false, {error:err});
+                done(err, false, {error:err});
             } else {
                 done(null, user);
-                console.log(user.id, "from deserialize")
+                console.log(user?.id, "from deserialize")
             }
         })
     }

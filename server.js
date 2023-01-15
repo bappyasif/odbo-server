@@ -103,7 +103,7 @@ app.use(expressSession({
       // with cross-site requests. Used to mitigate CSRF. Possible values are
       // 'strict' (or true), 'lax', and false (to NOT set SameSite attribute).
       // It only works in newer browsers, so CSRF prevention is still a concern.
-      sameSite: true,
+      sameSite: "none",
     }
 }))
 // middleware to read cookies

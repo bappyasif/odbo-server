@@ -26,6 +26,21 @@ const findOrCreateUser = async (profile, done) => {
   // done(null, profile);
 }
 
+// passport.use(
+//   new GoogleStrategy(
+//     {
+//       clientID: process.env.GOOGLE_CLIENT_ID,
+//       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+//       callbackURL: `${callbackRoute}/auth/google/callback`,
+//       // callbackURL: "/auth/google/callback",
+//     },
+//     function (req, accessToken, refreshToken, profile, done) {
+//       findOrCreateUser(profile, done);
+//       req.user = profile;
+//     }
+//   )
+// );
+
 passport.use(
   new GoogleStrategy(
     {
