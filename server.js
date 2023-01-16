@@ -111,7 +111,7 @@ app.get('/auth/google/callback',
 
 const isAuth = (req, res, next) => {
     console.log(req.sessionID, "!!", req.cookies, req.signedCookies)
-    if (req.user) {
+    if (req.user || req.session.passport.user) {
         next()
     } else {
         res.status(401).json({ msg: "authentication failed!!" })
@@ -119,7 +119,7 @@ const isAuth = (req, res, next) => {
 }
 
 app.get("/login/success", isAuth, (req, res) => {
-    res.status(200).json({ msg: "successful authentication", user: req.user })
+    res.status(200).json({ msg: "successful authentication", user: req.user || req.session.passport.user })
 })
 
 app.get("/logout", (req, res) => {
