@@ -26,9 +26,12 @@ const store = new MongoSession({
     collection: "userSessions"
 });
 
+app.use(express.urlencoded({extended: true}))
+app.use(express.json())
+
 app.use(cors({
     origin: [CLIENT_BASE_URL],
-    methods: "GET,POST,PUT,DELETE",
+    // methods: "GET,POST,PUT,DELETE",
     credentials: true,
 }))
 
@@ -37,8 +40,8 @@ app.set("trust proxy", 1);
 app.use(session({
     store,
     name: "sessionID",
-    saveUninitialized: false,
-    resave: false,
+    saveUninitialized: true,
+    resave: true,
     secret: process.env.SESSION_SECRET_KEYS,
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
@@ -48,7 +51,6 @@ app.use(session({
     }
 }))
 
-app.use(express.urlencoded({extended: true}))
 // app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
