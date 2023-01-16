@@ -43,11 +43,12 @@ app.use(session({
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
         // sameSite: "none",
-        // secure: true,
+        secure: true,
         maxAge: 1000 * 60 * 60 * 24
     }
 }))
 
+app.use(express.urlencoded({extended: true}))
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
