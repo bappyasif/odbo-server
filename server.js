@@ -1,20 +1,22 @@
-require("dotenv").config();
+const dotEnv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const express = require("express");
-// const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const MongoSession = require("connect-mongodb-session")(session)
 const passport = require("passport");
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require("./model/user");
-const app = express();
 
 // const REDIRECT_BASE_URL = "http://localhost:4000"
 // const CLIENT_BASE_URL = "http://localhost:3000"
 
 const REDIRECT_BASE_URL = "https://busy-lime-dolphin-hem.cyclic.app"
 const CLIENT_BASE_URL = "https://odbo-live.vercel.app"
+
+dotEnv.config();
+
+const app = express();
 
 mongoose.connect(process.env.DB_STR, {
     useNewUrlParser: true,
@@ -26,12 +28,12 @@ const store = new MongoSession({
     collection: "userSessions"
 });
 
-app.use(express.urlencoded({extended: true}))
+// middlewares
 app.use(express.json())
 
 app.use(cors({
     origin: [CLIENT_BASE_URL],
-    // methods: "GET,POST,PUT,DELETE",
+    methods: "GET,POST,PUT,DELETE",
     credentials: true,
 }))
 
@@ -53,7 +55,21 @@ app.use(session({
 
 // app.use(cookieParser());
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.session()); // app.use(passport.authenticate("session")) equivalent
+
+passport.serializeUser((user, done) => {
+    console.log(user.profileId, "from serializer")
+    done(null, user.profileId)
+})
+
+passport.deserializeUser((profileId, done) => {
+    console.log(profileId, "deserialize")
+    User.findOne({ profileId: profileId }, (err, user) => {
+        if (err) return done(err, null)
+        done(null, user)
+        console.log(user, "deserializer cb")
+    })
+})
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -85,33 +101,21 @@ passport.use(new GoogleStrategy({
     }
 ));
 
-passport.serializeUser((user, done) => {
-    console.log(user.profileId, "from serializer")
-    done(null, user.profileId)
-})
-
-passport.deserializeUser((profileId, done) => {
-    console.log(profileId, "deserialize")
-    User.findOne({ profileId: profileId }, (err, user) => {
-        if (err) return done(err, null)
-        done(null, user)
-        console.log(user, "deserializer cb")
-    })
-})
-
 app.get('/auth/google',
     passport.authenticate('google', { scope: ['profile'] }));
 
 app.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login' }),
+    passport.authenticate('google', { failureRedirect: '/login', session: true }),
     function (req, res) {
         // Successful authentication, redirect home.
+        console.log(req.user, "authenticated!!")
+        // req.userNew = req.user;
         res.redirect(CLIENT_BASE_URL);
     });
 
 const isAuth = (req, res, next) => {
-    console.log(req.sessionID, "!!", req.cookies, req.signedCookies)
-    if (req.user || req.session.passport.user) {
+    console.log(req.sessionID, "!!", req.cookies, req.signedCookies, req.session.cookie, req.session.passport)
+    if (req.user) {
         next()
     } else {
         res.status(401).json({ msg: "authentication failed!!" })
@@ -119,14 +123,23 @@ const isAuth = (req, res, next) => {
 }
 
 app.get("/login/success", isAuth, (req, res) => {
-    res.status(200).json({ msg: "successful authentication", user: req.user || req.session.passport.user })
+    res.status(200).json({ msg: "successful authentication", user: req.user })
 })
 
 app.get("/logout", (req, res) => {
-    req.logOut(err => {
-        if (err) return res.status(401).json({ msg: "logout failed!!" })
-        return res.redirect(`${CLIENT_BASE_URL}/`)
-    });
+    if (req.user) {
+        req.logOut(err => {
+            if (err) return res.status(401).json({ msg: "logout failed!!" })
+            req.session.destroy();
+            return res.redirect(`${CLIENT_BASE_URL}/`); //redirect back to the frontend home page
+        });
+    } else {
+        res.send("user is already logged out!");
+    }
+    // req.logOut(err => {
+    //     if (err) return res.status(401).json({ msg: "logout failed!!" })
+    //     return res.redirect(`${CLIENT_BASE_URL}/`)
+    // });
     //   res.redirect(CLIENT_BASE_URL);
     //   res.status(200).json({msg: "successfull logout"})
 })
