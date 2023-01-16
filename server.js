@@ -2,7 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const cors = require("cors");
 const express = require("express");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const MongoSession = require("connect-mongodb-session")(session)
 const passport = require("passport");
@@ -49,7 +49,7 @@ app.use(session({
 }))
 
 app.use(express.urlencoded({extended: true}))
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -108,7 +108,7 @@ app.get('/auth/google/callback',
     });
 
 const isAuth = (req, res, next) => {
-    console.log(req.sessionID, "!!", req.cookies)
+    console.log(req.sessionID, "!!", req.cookies, req.signedCookies)
     if (req.user) {
         next()
     } else {
