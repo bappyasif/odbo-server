@@ -10,11 +10,11 @@ var GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require("./model/user");
 const app = express();
 
-// const REDIRECT_BASE_URL = "http://localhost:4000"
-// const CLIENT_BASE_URL = "http://localhost:3000"
+const REDIRECT_BASE_URL = "http://localhost:4000"
+const CLIENT_BASE_URL = "http://localhost:3000"
 
-const REDIRECT_BASE_URL = "https://busy-lime-dolphin-hem.cyclic.app"
-const CLIENT_BASE_URL = "https://odbo-live.vercel.app"
+// const REDIRECT_BASE_URL = "https://busy-lime-dolphin-hem.cyclic.app"
+// const CLIENT_BASE_URL = "https://odbo-live.vercel.app"
 
 mongoose.connect(process.env.DB_STR, {
     useNewUrlParser: true,
@@ -45,8 +45,8 @@ app.use(session({
     secret: process.env.SESSION_SECRET_KEYS,
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
-        sameSite: "none",
-        secure: true,
+        // sameSite: "none",
+        // secure: true,
         maxAge: 1000 * 60 * 60 * 24
     }
 }))
@@ -110,8 +110,8 @@ app.get('/auth/google/callback',
     });
 
 const isAuth = (req, res, next) => {
-    console.log(req.sessionID, "!!", req.cookies, req.signedCookies)
-    if (req.user || req.session.passport.user) {
+    console.log(req.sessionID, "!!", req.cookies, req.signedCookies, req.session?.passport?.user, req.user)
+    if (req.user || req.session?.passport?.user) {
         next()
     } else {
         res.status(401).json({ msg: "authentication failed!!" })
@@ -119,7 +119,7 @@ const isAuth = (req, res, next) => {
 }
 
 app.get("/login/success", isAuth, (req, res) => {
-    res.status(200).json({ msg: "successful authentication", user: req.user || req.session.passport.user })
+    res.status(200).json({ msg: "successful authentication", user: req.user || req.session?.passport?.user })
 })
 
 app.get("/logout", (req, res) => {
