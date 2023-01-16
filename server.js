@@ -43,11 +43,11 @@ app.use(session({
     store,
     name: "sessionID",
     saveUninitialized: true,
-    resave: true,
+    resave: false,
     secret: process.env.SESSION_SECRET_KEYS,
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
-        sameSite: "none",
+        // sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24
     }
@@ -109,21 +109,22 @@ app.get('/auth/google/callback',
     function (req, res) {
         // Successful authentication, redirect home.
         console.log(req.user, "authenticated!!")
-        // req.userNew = req.user;
+        req.session.userNew = req.user;
         res.redirect(CLIENT_BASE_URL);
     });
 
 const isAuth = (req, res, next) => {
-    console.log(req.sessionID, "!!", req.cookies, req.signedCookies, req.session.cookie, req.session.passport)
-    if (req.user) {
+    console.log(req.sessionID, "!!", req.cookies, req.signedCookies, req.session.cookie, req.session.passport, req.session?.newUser)
+    if (req.user || req.session?.newUser) {
         next()
     } else {
         res.status(401).json({ msg: "authentication failed!!" })
+        // return res.redirect(`${CLIENT_BASE_URL}/login`)
     }
 }
 
 app.get("/login/success", isAuth, (req, res) => {
-    res.status(200).json({ msg: "successful authentication", user: req.user })
+    res.status(200).json({ msg: "successful authentication", user: req.user || req.session?.newUser})
 })
 
 app.get("/logout", (req, res) => {
