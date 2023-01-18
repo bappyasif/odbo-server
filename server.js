@@ -32,7 +32,7 @@ const store = new MongoSession({
 app.use(express.json())
 
 app.use(cors({
-    origin: [CLIENT_BASE_URL],
+    origin: CLIENT_BASE_URL,
     methods: "GET,POST,PUT,DELETE",
     credentials: true,
 }))
@@ -47,7 +47,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET_KEYS,
     cookie: {
         // when running from local host, it doesnt have any ssl protocol, so both secure and samesite origin actually makes cookies attachment requests invalid
-        // sameSite: "none",
+        sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24
     }
@@ -93,7 +93,7 @@ passport.use(new GoogleStrategy({
                     console.log("created User", createdUser)
                     return cb(null, user)
                 }).catch(err => {
-                    console.log("create user thrown error")
+                    console.log("create user operation has thrown error")
                     cb(err, null)
                 })
             }
@@ -137,12 +137,6 @@ app.get("/logout", (req, res) => {
     } else {
         res.send("user is already logged out!");
     }
-    // req.logOut(err => {
-    //     if (err) return res.status(401).json({ msg: "logout failed!!" })
-    //     return res.redirect(`${CLIENT_BASE_URL}/`)
-    // });
-    //   res.redirect(CLIENT_BASE_URL);
-    //   res.status(200).json({msg: "successfull logout"})
 })
 
 app.listen(4000, () => console.log("server is running on 4000"))
