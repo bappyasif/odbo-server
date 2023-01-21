@@ -43,7 +43,7 @@ const issueJWT = (user) => {
     }
 
     const options = {
-        expiresIn,
+        expiresIn: expiresIn,
         // algorithm: "RS256"
     }
 
@@ -59,9 +59,19 @@ const issueJWT = (user) => {
     }
 }
 
+// const verifyJWT = (tokenString) => {
+//     const verification = jsonwebtoken.verify(tokenString, process.env.JWT_SECRET_TOKEN)
+//     // const verification = jsonwebtoken.verify(tokenString, PUBLIC_KEY, { algorithms: ["RS256"] })
+//     return verification;
+// }
+
 const verifyJWT = (tokenString) => {
-    const verification = jsonwebtoken.verify(tokenString, process.env.JWT_SECRET_TOKEN)
-    // const verification = jsonwebtoken.verify(tokenString, PUBLIC_KEY, { algorithms: ["RS256"] })
+    let verification = null;
+    try {
+        verification = jsonwebtoken.verify(tokenString, process.env.JWT_SECRET_TOKEN)
+    } catch (err) {
+        console.log("jwt token verification failed!!", err)
+    }
     return verification;
 }
 

@@ -2,6 +2,7 @@ const passport = require("passport");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/user");
 const { generatePassword, validatePassword, issueJWT, verifyJWT } = require("../utils/jwt");
+const { createJwtAccessToken, createJwtRefreshToken, verifyAccessTokenVilidity, extractUserFromToken } = require("../configs/jwt");
 
 const registerUser = [
     body("fullname", "fullname can not be left empty")
@@ -94,11 +95,16 @@ const loginUser = [
 
                     if (userValid) {
                         // issuing jwt signed token for authentication
-                        const jwt = issueJWT(user);
+                        // const jwt = issueJWT(user);
+
+                        const accessToken = createJwtAccessToken(user)
+                        const refreshToken = createJwtRefreshToken(user);
 
                         // successfully verified and commencing user authentication with json web token
                         // returning response object with signed token for client to use as a valid user
-                        res.status(200).json({ success: true, user: user, userJwt: { token: jwt.token, expiresIn: jwt.expires } })
+                        // res.status(200).json({ success: true, user: user, userJwt: { token: jwt.token, expiresIn: jwt.expires } })
+
+                        res.status(200).json({ success: true, user: user, userJwt: { token: accessToken, refreshToken: refreshToken } })
 
                     } else {
                         // if token does not match then we;re sending back a 401 error saying password does nto match
@@ -137,37 +143,54 @@ const returnAuthenticatedUser = (req, res, next) => {
 }
 
 const authenticatedUserJwtVerification = (req, res, next) => {
+    const refreshToken = req?.headers?.refreshtoken;
     const tokenParts = req?.headers?.authorization?.split(' ');
 
-    const bearerText = tokenParts[0]
-    const tokenString = tokenParts[1];
+    console.log(req?.headers)
 
-    // console.log(bearerText, tokenString)
+    // console.log(refreshToken, req.body)
 
-    if(bearerText === "Bearer" && tokenString.match(/\S+\.\S+\.\S+/)) {
-        try {
-            const verification = verifyJWT(tokenString)
-            req.jwt = verification;
-            next();
-        } catch (err) {
-            console.log(err, "invalid token")
-            res.status(401).json({msg: "Unauthorized token"})
+    if (tokenParts) {
+        const bearerText = tokenParts[0]
+        const tokenString = tokenParts[1];
+
+        // console.log(bearerText, tokenString, refreshToken, req.body)
+
+        if (bearerText === "Bearer" && tokenString.match(/\S+\.\S+\.\S+/)) {
+            try {
+                // const verification = verifyJWT(tokenString)
+
+                const verification = verifyAccessTokenVilidity(tokenString, refreshToken)
+                req.jwt = verification;
+                next();
+            } catch (err) {
+                console.log(err, "invalid token")
+                res.status(401).json({ msg: "Unauthorized token" })
+            }
+        } else {
+            res.status(401).json({ msg: "Unauthorized token" })
         }
     } else {
-        res.status(401).json({msg: "Unauthorized token"})
+        res.status(401).json({ msg: "Undefined token" })
     }
-
 }
 
 const extractDataForAnAuthenticatedUser = (req, res, next) => {
-    User.findOne({_id: req.jwt.sub})
-        .then(dataset => {
-            // console.log(dataset, "dataset!!")
-            res.status(201).json({msg: "user data has been transported after JWT verficiation", user: dataset})
-        }).catch(err => {
-            console.log(err)
-            return res.status(403).json({msg: "response error!!"})
-        })
+    const test = extractUserFromToken(req.jwt)
+    console.log(req.jwt, "req.jwt!!", test)
+
+    if (req.jwt?.sub) {
+        User.findOne({ _id: req.jwt.sub })
+            .then(dataset => {
+                // console.log(dataset, "dataset!!")
+                res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
+            }).catch(err => {
+                console.log(err)
+                return res.status(403).json({ msg: "response error!!" })
+            })
+    } else {
+        res.status(401).json({ msg: "Undefined token" })
+    }
 }
 
 const logoutUser = (req, res, next) => {
