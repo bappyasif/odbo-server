@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const createJwtAccessToken = (user) => {
     const payload = {
-        sub: user._id
+        sub: user._id || user.sub
     }
 
     const options = {
@@ -27,10 +27,30 @@ const createJwtRefreshToken = (user) => {
 const generateNewAccessToken = (refreshToken) => {
     return jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN, (err, user) => {
         if(err) return undefined
+        console.log(user, "EMBED SUB!!")
         const accessToken = createJwtAccessToken(user)
         return accessToken;
     })
 }
+
+// const generateNewAccessToken = (refreshToken) => {
+//     let newToken = null
+//     try {
+//         newToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN)
+//     } catch (err) {
+//         console.log("new access code error")
+//         return false
+//     } 
+//     return newToken
+// }
+
+// const generateNewAccessToken = (refreshToken, user) => {
+//     return jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN, (err) => {
+//         if(err) return undefined
+//         const accessToken = createJwtAccessToken(user)
+//         return accessToken;
+//     })
+// }
 
 const verifyAccessTokenVilidity = (accessToken, refreshToken) => {
     let tokenVerified = null

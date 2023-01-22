@@ -146,11 +146,11 @@ const authenticatedUserJwtVerification = (req, res, next) => {
     const refreshToken = req?.headers?.refreshtoken;
     const tokenParts = req?.headers?.authorization?.split(' ');
 
-    console.log(req?.headers)
+    // console.log(req?.headers)
 
     // console.log(refreshToken, req.body)
 
-    if (tokenParts) {
+    if (tokenParts && refreshToken) {
         const bearerText = tokenParts[0]
         const tokenString = tokenParts[1];
 
@@ -165,13 +165,13 @@ const authenticatedUserJwtVerification = (req, res, next) => {
                 next();
             } catch (err) {
                 console.log(err, "invalid token")
-                res.status(401).json({ msg: "Unauthorized token" })
+                res.status(401).json({ msg: "Unauthorized token", success: false })
             }
         } else {
-            res.status(401).json({ msg: "Unauthorized token" })
+            res.status(401).json({ msg: "Unauthorized token", success: false })
         }
     } else {
-        res.status(401).json({ msg: "Undefined token" })
+        res.status(401).json({ msg: "Undefined token", success: false })
     }
 }
 
@@ -179,8 +179,8 @@ const extractDataForAnAuthenticatedUser = (req, res, next) => {
     const test = extractUserFromToken(req.jwt)
     console.log(req.jwt, "req.jwt!!", test)
 
-    if (req.jwt?.sub) {
-        User.findOne({ _id: req.jwt.sub })
+    if (test?.sub || req.jwt?.sub) {
+        User.findOne({ _id: test?.sub || req.jwt.sub })
             .then(dataset => {
                 // console.log(dataset, "dataset!!")
                 res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
