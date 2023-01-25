@@ -86,7 +86,7 @@ const getSoloPost = (req, res, next) => {
 
 const createNewPost = [
     body("body", "post can not be left empty")
-        .trim().isLength({ min: 1 }),
+        .trim().isLength({ min: 1 }).escape(),
     body("body", "post needs to be at least 4 characters long")
         .trim().isLength({ min: 4 }),
     body("Image", "image url needs to be a proper url")

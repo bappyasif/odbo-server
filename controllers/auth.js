@@ -10,7 +10,7 @@ const registerUser = [
     body("email", "email can not be left empty")
         .trim().isLength({ min: 1 }).escape(),
     body("email", "email needs to be of email type")
-        .trim().isEmail().escape(),
+        .trim().isEmail().normalizeEmail().escape(),
     body("password", "password can not be left empty")
         .trim().isLength({ min: 1 }).escape(),
     body("password", "password needs to be more than or equal to 4 characters")
@@ -71,7 +71,7 @@ const loginUser = [
     body("email", "email can not be left empty")
         .trim().isLength({ min: 1 }).escape(),
     body("email", "email needs to be of email type")
-        .trim().isEmail().escape(),
+        .trim().isEmail().normalizeEmail().escape(),
     body("password", "password can not be left empty")
         .trim().isLength({ min: 1 }).escape(),
     body("password", "password needs to be at least 4 characters long")

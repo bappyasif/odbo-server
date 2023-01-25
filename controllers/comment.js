@@ -93,7 +93,7 @@ const updateSoloCommentCounts = (req, res, next) => {
 
 const createNewComment = [
     body("text", "comment body can not be left empty")
-        .trim().isLength({ min: 1 }),
+        .trim().isLength({ min: 1 }).escape(),
 
     (req, res, next) => {
         let errors = validationResult(req);
