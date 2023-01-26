@@ -104,8 +104,10 @@ const createNewPost = [
     body("Video", "video url needs to be a proper url")
         .isURL().optional(),
     // .trim().escape(),
-    body("Gif", "gif needs to be an array of gif object")
-        .isObject().optional(),
+    // body("Gif", "gif needs to be an array of gif object")
+    //     .isObject().optional(),
+    body("Gif", "gif needs to be a string containing it's id")
+        .isString().optional(),
     check("Poll", "poll needs to be an array of object")
         .isObject().optional(),
     body("Privacy", "Privacy needs to be a string")
@@ -113,6 +115,7 @@ const createNewPost = [
 
     (req, res, next) => {
         let errors = validationResult(req);
+        
         if (!errors.isEmpty()) {
             return res.status(402).json({ success: false, errors: errors.array() })
         }
