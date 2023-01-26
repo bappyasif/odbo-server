@@ -93,7 +93,7 @@ const updateSoloCommentCounts = (req, res, next) => {
 
 const createNewComment = [
     body("text", "comment body can not be left empty")
-        .trim().isLength({ min: 1 }).escape(),
+        .trim().isLength({ min: 1 }).exists(),
 
     (req, res, next) => {
         let errors = validationResult(req);
@@ -101,10 +101,18 @@ const createNewComment = [
             return res.status(402).json({ success: false, errors: errors.array() })
         }
 
+        const sanitizeCommentTextContent = (val) => {
+            const window = new JSDOM("").window;
+            const DomPurify = createDomPurify(window);
+            const clean = DomPurify.sanitize(val)
+            return clean
+        }
+
         // ready to be saved into database
         if (req.body.userId) {
             let newComment = new Comment({
-                body: req.body.text,
+                // body: req.body.text,
+                body: sanitizeCommentTextContent(req.body.text),
                 userId: req.body.userId,
                 postId: req.body.postId,
                 created: new Date().toISOString()

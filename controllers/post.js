@@ -1,4 +1,6 @@
 const { body, validationResult, check } = require("express-validator");
+const createDomPurify = require("dompurify");
+const {JSDOM} = require("jsdom");
 const async = require("async");
 const Post = require("../models/post");
 const User = require("../models/user");
@@ -86,9 +88,16 @@ const getSoloPost = (req, res, next) => {
 
 const createNewPost = [
     body("body", "post can not be left empty")
-        .trim().isLength({ min: 1 }).escape(),
+        .trim().isLength({ min: 1 }),
     body("body", "post needs to be at least 4 characters long")
         .trim().isLength({ min: 4 }),
+    // body("body", "no dirty or fishy or sketchy tags are allowed")
+    //     .custom(val => {
+    //         const window = new JSDOM("").window;
+    //         const DomPurify = createDomPurify(window);
+    //         const clean = DomPurify.sanitize(val)
+    //         return clean
+    //     }),
     body("Image", "image url needs to be a proper url")
         .isURL().optional(),
     // .trim().escape(),
@@ -108,9 +117,17 @@ const createNewPost = [
             return res.status(402).json({ success: false, errors: errors.array() })
         }
 
+        const sanitizeBodyHtmlContent = (val) => {
+            const window = new JSDOM("").window;
+            const DomPurify = createDomPurify(window);
+            const clean = DomPurify.sanitize(val)
+            return clean
+        }
+
         // data is sanitized and validated for to be saved in databse
         let newPost = new Post({
-            body: req.body.body,
+            // body: req.body.body,
+            body: sanitizeBodyHtmlContent(req.body.body),
             userId: req.params.userId,
             created: new Date().toISOString(),
             privacy: req.body.Privacy,
