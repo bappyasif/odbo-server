@@ -179,22 +179,53 @@ const authenticatedUserJwtVerification = (req, res, next) => {
     }
 }
 
-const extractDataForAnAuthenticatedUser = (req, res, next) => {
-    const test = extractUserFromToken(req.jwt)
-    console.log(req.jwt, "req.jwt!!", test)
+const sendUserDataAfterJwtAuthentication = (userId, res) => {
+    User.findOne({ _id: userId })
+        .then(dataset => {
+            // console.log(dataset, "dataset!!")
+            res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
+        }).catch(err => {
+            console.log(err)
+            return res.status(403).json({ msg: "response error!!" })
+        })
+}
 
-    if (test?.sub || req.jwt?.sub) {
-        User.findOne({ _id: test?.sub || req.jwt.sub })
-            .then(dataset => {
-                // console.log(dataset, "dataset!!")
-                res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
-            }).catch(err => {
-                console.log(err)
-                return res.status(403).json({ msg: "response error!!" })
-            })
+const extractDataForAnAuthenticatedUser = (req, res, next) => {
+    const user = extractUserFromToken(req.jwt)
+    console.log(req.jwt, "req.jwt!!", user)
+
+    if (user?.sub || req.jwt?.sub) {
+        sendUserDataAfterJwtAuthentication(user?.sub || req.jwt?.sub, res)
+
+        // User.findOne({ _id: test?.sub || req.jwt.sub })
+        //     .then(dataset => {
+        //         // console.log(dataset, "dataset!!")
+        //         res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
+        //     }).catch(err => {
+        //         console.log(err)
+        //         return res.status(403).json({ msg: "response error!!" })
+        //     })
     } else {
         res.status(401).json({ msg: "Undefined token" })
     }
+}
+
+const extractUserFromValidToken = (req, res) => {
+    const tokenParts = req.headers.authorization.split(" ");
+
+    const token = tokenParts[1];
+
+    // extractDataForAnAuthenticatedUser(req, res)
+
+    const user = extractUserFromToken(token)
+
+    if(user?.sub) {
+        sendUserDataAfterJwtAuthentication(user?.sub, res)
+    } else {
+        res.status(401).json({ msg: "Invalid token" })
+    }
+
+    // res.status(200).json({ token: token, user: user })
 }
 
 const logoutUser = (req, res, next) => {
@@ -212,5 +243,6 @@ module.exports = {
     logoutUser,
     returnAuthenticatedUser,
     extractDataForAnAuthenticatedUser,
-    authenticatedUserJwtVerification
+    authenticatedUserJwtVerification,
+    extractUserFromValidToken
 }

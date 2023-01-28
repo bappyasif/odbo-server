@@ -1,6 +1,6 @@
 const passport = require("passport");
 const express = require("express");
-const { registerUser, loginUser, logoutUser, returnAuthenticatedUser, loginWithOauthProvider, extractDataForAnAuthenticatedUser, authenticatedUserJwtVerification } = require("../controllers/auth");
+const { registerUser, loginUser, logoutUser, returnAuthenticatedUser, loginWithOauthProvider, extractDataForAnAuthenticatedUser, authenticatedUserJwtVerification, extractUserFromValidToken } = require("../controllers/auth");
 const authRoutes = express();
 
 // const baseUrlForAuth = "http://localhost:3001"
@@ -59,6 +59,8 @@ authRoutes.get("/logout", isAuthenticated, logoutUser)
 // authRoutes.get("/logout", logoutUser)
 
 authRoutes.get("/protected", authenticatedUserJwtVerification, extractDataForAnAuthenticatedUser)
+
+authRoutes.get("/valid-user", extractUserFromValidToken)
 
 module.exports = {
     authRoutes,
