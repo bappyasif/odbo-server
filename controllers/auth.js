@@ -57,10 +57,14 @@ const registerUser = [
                         if (err) return next(err);
 
                         // issuing jwt token with our private key, so that out verfication with public key remains valid
-                        const jwt = issueJWT(user);
+                        // const jwt = issueJWT(user);
+
+                        const accessToken = createJwtAccessToken(user)
+                        const refreshToken = createJwtRefreshToken(user);
 
                         // user is saved successfully, returning a response so that authentication token can be passed on to client browser
-                        res.status(200).json({ success: true, user: user, token: jwt.token, expiresIn: jwt.expires })
+                        res.status(200).json({ success: true, user: user, userJwt: { token: accessToken, refreshToken: refreshToken } })
+                        // res.status(200).json({ success: true, user: user, token: jwt.token, expiresIn: jwt.expires })
                     })
                 }
             }).catch(err => next(err))
