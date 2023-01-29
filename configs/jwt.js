@@ -20,13 +20,13 @@ const createJwtRefreshToken = (user) => {
     const options = {
         expiresIn: "1m"
     }
-    
+
     return jwt.sign(payload, process.env.JWT_REFRESH_TOKEN, options)
 }
 
 const generateNewAccessToken = (refreshToken) => {
     return jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN, (err, user) => {
-        if(err) return undefined
+        if (err) return undefined
         console.log(user, "EMBED SUB!!")
         const accessToken = createJwtAccessToken(user)
         return accessToken;
@@ -57,10 +57,10 @@ const verifyAccessTokenVilidity = (accessToken, refreshToken) => {
 
     console.log(accessToken, refreshToken)
 
-    if(accessToken && refreshToken) {
-        try{
+    if (accessToken && refreshToken) {
+        try {
             tokenVerified = jwt.verify(accessToken, process.env.JWT_SECRET_TOKEN)
-        } catch(err) {
+        } catch (err) {
             console.log("jwt token validity failed", err)
             tokenVerified = generateNewAccessToken(refreshToken)
             console.log("new token is assigned", tokenVerified)
@@ -97,6 +97,7 @@ const extractUserFromToken = (accessToken) => {
         console.log("user extraction has failed!!", err)
         return false
     }
+
     return test
 }
 

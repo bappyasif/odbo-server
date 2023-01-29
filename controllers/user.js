@@ -1,7 +1,8 @@
 const { body, validationResult } = require("express-validator");
 const async = require("async");
 const User = require("../models/user");
-const user = require("../models/user");
+const Post = require("../models/post");
+const Comment = require("../models/comment");
 
 const getAllUsers = (req, res, next) => {
     User.find({})
@@ -33,28 +34,28 @@ const getAnUser = (req, res, next) => {
 const updateUserProfileInfo = (req, res, next) => {
     let userId = req.params.userId;
     let data = req.body;
-    
+
     // console.log(data, userId, "wat wat!!")
 
     User.findOne({ _id: userId })
         .then(currentUser => {
-            if(data.ppUrl) {
+            if (data.ppUrl) {
                 currentUser.ppUrl = data.ppUrl;
             }
 
-            if(data.cpUrl) {
+            if (data.cpUrl) {
                 currentUser.cpUrl = data.cpUrl;
             }
 
-            if(data.topics) {
+            if (data.topics) {
                 currentUser.topics = data.topics;
             }
 
-            if(data.fullName) {
+            if (data.fullName) {
                 currentUser.fullName = data.fullName;
             }
 
-            if(data.bio) {
+            if (data.bio) {
                 currentUser.bio = data.bio;
             }
 
@@ -63,7 +64,7 @@ const updateUserProfileInfo = (req, res, next) => {
             User.findByIdAndUpdate(currentUser._id, currentUser, {})
                 .then(() => {
                     console.log("user profile data updated....");
-                    res.status(200).json({success: true, user: currentUser})
+                    res.status(200).json({ success: true, user: currentUser })
                 })
                 .catch(err => next(err))
 
@@ -102,12 +103,37 @@ const updateUser = (req, res, next) => {
 }
 
 const deleteUser = (req, res, next) => {
-    User.findByIdAndDelete({ _id: req.params.userId })
-        .then(err => {
-            if (err) return next(err);
-            res.status(200).json({ success: true, msg: "user has been deleted" })
-        }).catch(err => next(err))
+    const userId = req.params.userId
+    async.parallel(
+        {
+            deleteUserCreatedPosts(cb) {
+                Post.deleteMany({userId: userId}).exec(cb)
+            },
+            deleteUserCreatedComments(cb) {
+                Comment.deleteMany({userId: userId}).exec(cb)
+            }
+        },
+        (err, results) => {
+            if(err) return next(err)
+
+            console.log("DELETED POSTS AND COMMENTS FROM THIS USER")
+
+            User.findByIdAndDelete({ _id: userId })
+                .then(err => {
+                    if (err) return next(err);
+                    res.status(200).json({ success: true, msg: "user has been deleted" })
+                }).catch(err => next(err))
+        }
+    )
 }
+
+// const deleteUser = (req, res, next) => {
+//     User.findByIdAndDelete({ _id: req.params.userId })
+//         .then(err => {
+//             if (err) return next(err);           
+//             res.status(200).json({ success: true, msg: "user has been deleted" })
+//         }).catch(err => next(err))
+// }
 
 const acceptUserFriendRequest = (req, res, next) => {
     let friendId = req.body.accept
@@ -116,7 +142,7 @@ const acceptUserFriendRequest = (req, res, next) => {
         .then(currentUser => {
             if (currentUser) {
                 let filter = currentUser.frRecieved.filter(id => id !== friendId)
-                
+
                 currentUser.frRecieved = filter;
 
                 currentUser.friends.push(friendId)
