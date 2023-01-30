@@ -1,6 +1,6 @@
 const express = require("express");
 const { authenticatedUserJwtVerification } = require("../controllers/auth");
-const { getAllUsers, getAnUser, updateUser, deleteUser, acceptUserFriendRequest, rejectUserFriendRequest, removeUserFromFriendList, updateUserProfileInfo, getAnUserWithMinimumData } = require("../controllers/user");
+const { getAllUsers, getAnUser, updateUser, deleteUser, acceptUserFriendRequest, rejectUserFriendRequest, removeUserFromFriendList, updateUserProfileInfo, getAnUserWithMinimumData, resetUserAccountPassword } = require("../controllers/user");
 const { isAuthenticated } = require("./auth");
 const userRoutes = express();
 
@@ -16,6 +16,7 @@ userRoutes.get("/:userId", authenticatedUserJwtVerification, getAnUser)
 userRoutes.put("/:userId/profile", authenticatedUserJwtVerification, updateUserProfileInfo)
 userRoutes.put("/:userId", authenticatedUserJwtVerification, updateUser)
 userRoutes.delete("/:userId", authenticatedUserJwtVerification, deleteUser)
+userRoutes.put("/:userId/reset-password", authenticatedUserJwtVerification, resetUserAccountPassword)
 
 // userRoutes.put("/:userId/accept", acceptUserFriendRequest)
 // userRoutes.put("/:userId/reject", rejectUserFriendRequest)
