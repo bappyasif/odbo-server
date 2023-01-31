@@ -166,10 +166,16 @@ const authenticatedUserJwtVerification = (req, res, next) => {
 
                 const verification = verifyAccessTokenVilidity(tokenString, refreshToken)
                 req.jwt = verification;
-                next();
+
+                if(verification) {
+                    next();
+                } else {
+                    return res.status(401).json({ msg: "Expired token", success: false })
+                }
+                // next();
             } catch (err) {
                 console.log(err, "invalid token")
-                res.status(401).json({ msg: "Unauthorized token", success: false })
+                res.status(401).json({ msg: "Invalid token", success: false })
             }
         } else {
             res.status(401).json({ msg: "Unauthorized token", success: false })

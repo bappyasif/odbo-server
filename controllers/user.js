@@ -103,31 +103,67 @@ const updateUser = (req, res, next) => {
 }
 
 const resetUserAccountPassword = [
-    body("current-password", "can not be empty").isLength({min: 1}).escape(),
-    body("curent-password", "current password doesnt match with account stored passwrod").custom((val, {req}) => {
-        const userId = req.params.userId;
-        User.findOne({_id: userId})
-        .then(currentUser => {
-            if(currentUser.password === val) {
-                return true
-            } else {
-                return false
-            }
-        }).catch(err => console.log("db method error occured"))
-    }),
-    body("new-password", "can not be empty").isLength({min: 1}).escape(),
-    body("confirm-password", "can not be empty").isLength({min: 1}).escape(),
-    body("confirm-passowrd", "new password confirmation does not match").custom((val, {req}) => {
-        return val === req.body["new-password"]
-    }),
+    body("current-password", "can not be empty").isLength({ min: 1 }).escape(),
+    // body("current-password", "current password doesnt match with account stored password")
+    // .custom((val, {req}) => {
+    //     const userId = req.params.userId;
+    //     console.log(userId, val)
+    //     return User.findOne({_id: userId})
+    //     .then(currentUser => {
+    //         console.log(userId, val, currentUser.password, currentUser.password === val)
+    //         if(currentUser.password === val) {
+    //             console.log("password matched!!")
+    //             // return true
+    //             return Promise.resolve("password matched!!")
+    //         } else {
+    //             console.log("password mismatched!!")
+    //             // return false
+    //             return Promise.reject("password mismatched!!")
+    //         }
+    //     }).catch(err => console.log("db method error occured"))
+    // }),
+    body("new-password", "can not be empty").isLength({ min: 1 }).escape(),
+    body("confirm-password", "can not be empty").isLength({ min: 1 }).escape(),
+    body("confirm-password", "new password confirmation does not match")
+        .custom((val, { req }) => {
+            return val === req.body["new-password"]
+        }),
     (req, res) => {
         const errors = validationResult(req)
-        if(!errors.isEmpty()) {
-            return res.status(401).json({msg: "error occured", errors: errors.array()})
-        }
         
-        console.log("all good!!", req.body)
-        res.status(200).json({msg: "password changed!!"})
+        if (!errors.isEmpty()) {
+            console.log("errors!!", errors.array())
+            return res.status(401).json({ msg: "error occured", errors: errors.array() })
+        }
+
+        const userId = req.params.userId;
+
+        return User.findOne({ _id: userId })
+            .then(currentUser => {
+                // console.log(userId, val, currentUser.password, currentUser.password === val)
+                console.log(currentUser.password === req.body["current-password"], currentUser.password, req.body["current-password"])
+                if (currentUser.password === req.body["current-password"]) {
+                    
+                    console.log("password matched!!", req.body["new-password"])
+
+                    currentUser.password = req.body["new-password"]
+                    
+                    User.findByIdAndUpdate(currentUser._id, currentUser, {})
+                    .then(() => {
+                        res.status(200).json({ msg: "password changed!!" })
+                    }).catch(err => console.log(err, "updated failed!!"))
+
+                    // console.log("all good!!", req.body)
+                    // res.status(200).json({ msg: "password changed!!" })
+                    // return true
+                    // return Promise.resolve("password matched!!")
+                } else {
+                    console.log("password mismatched!!")
+                    res.status(403).json({ msg: "user current password mismatched!!" })
+                    // return false
+                    // return Promise.reject("password mismatched!!")
+                }
+            }).catch(err => console.log("db method error occured"))
     }
 ]
 
@@ -136,14 +172,14 @@ const deleteUser = (req, res, next) => {
     async.parallel(
         {
             deleteUserCreatedPosts(cb) {
-                Post.deleteMany({userId: userId}).exec(cb)
+                Post.deleteMany({ userId: userId }).exec(cb)
             },
             deleteUserCreatedComments(cb) {
-                Comment.deleteMany({userId: userId}).exec(cb)
+                Comment.deleteMany({ userId: userId }).exec(cb)
             }
         },
         (err, results) => {
-            if(err) return next(err)
+            if (err) return next(err)
 
             console.log("DELETED POSTS AND COMMENTS FROM THIS USER")
 
