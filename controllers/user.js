@@ -4,6 +4,7 @@ const User = require("../models/user");
 const Post = require("../models/post");
 const Comment = require("../models/comment");
 const { generatePassword } = require("../utils/jwt");
+const { etherialEmailClientAgent } = require("../utils/nodeMailer");
 
 const getAllUsers = (req, res, next) => {
     User.find({})
@@ -30,6 +31,19 @@ const getAnUser = (req, res, next) => {
         .then(result => {
             res.status(200).json({ success: true, data: result })
         }).catch(err => next(err))
+}
+
+const sendOtpViaEmail = (req, res) => {
+    const otpCode = req.body.otpCode;
+
+    const toAddress = req.body.email;
+
+    etherialEmailClientAgent(toAddress, otpCode)
+        .then((info) => {
+            console.log("message sent", info?.messageId)
+            // console.log("sent message url preview", nodemailer.getTestMessageUrl(info))
+            res.status(200).json({ msg: "email sent", msgId: info?.messageId })
+        }).catch(err => console.log("email couldnt be sent", err))
 }
 
 const updateUserProfileInfo = (req, res, next) => {
@@ -147,7 +161,7 @@ const resetUserAccountPassword = [
                 if (currentUser.password === req.body["current-password"]) {
 
                     console.log("password matched!!", req.body["new-password"])
-                    
+
                     const getSaltAndHash = generatePassword(req.body["new-password"]);
 
                     const salt = getSaltAndHash.salt;
@@ -316,5 +330,6 @@ module.exports = {
     updateUser,
     deleteUser,
     getAnUserWithMinimumData,
-    resetUserAccountPassword
+    resetUserAccountPassword,
+    sendOtpViaEmail
 }
