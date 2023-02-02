@@ -1,19 +1,22 @@
 const nodemailer = require("nodemailer");
 
+const ACCESS_TOKEN_NODE_MAILER = "ya29.a0AVvZVspy45W7S1DreyZ606AZPReELV17Ka-ADP7Bak2NRkrMI5S1f6kyDbK38ac1s1kSb9WSv7Yd-D-0zF5YviETs8ziTC7aZuR5OXMZRTtz2WcEPUUNrzqOMS-eVgWyhAXmUx0HLrSfW1QFHjB7FvKjlu2BaCgYKAe8SARISFQGbdwaIPKjtebCLh0welEbr8TcL9Q0163";
+
 const etherialEmailClientTransporter = (user, pass) => {
     const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
-        // port: 587,
-        port: 465,
-        // secure: false, // true for 465, false for other ports
-        secure: true, // true for 465, false for other ports
+        // host: "gmail",
         auth: {
-            user: "odbo.live@gmail.com",
-            pass: "OdBo_LiVe"
+            type: "oauth2",
+            user: process.env.GMAIL_ID,
+            pass: process.env.GMAIL_PASSWORD,
+            clientId: process.env.NODEMAILER_OAUTH_CLIENT_ID,
+            clientSecret: process.env.NODEMAILER_OAUTH_CLIENT_SECRET,
+            refreshToken: process.env.NODEMAILER_OAUTH_REFRESH_TOKEN
         }
     })
 
-    console.log("from transporter")
+    // console.log("from transporter")
 
     return transporter;
 }
@@ -21,7 +24,7 @@ const etherialEmailClientTransporter = (user, pass) => {
 const emailOptions = (toAddress, otpCode, fromAddress) => {
     const options = {
         // from: `${fromAddress}`,
-        from: `OdBo <odbo.live@gmail.com>`,
+        // from: `OdBo <odbo.live@gmail.com>`, // whichever account is authenticated gmail will use that address as from by default
         to: toAddress,
         subject: "Otp Passcode",
         text: `Your OTP Passcode Is : ${otpCode}`,
@@ -65,6 +68,26 @@ module.exports = {
 }
 
 /**
+ * 
+ * 
+ const etherialEmailClientTransporter = (user, pass) => {
+    const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        // host: "gmail",
+        // port: 587,
+        port: 465,
+        // secure: false, // true for 465, false for other ports
+        secure: true, // true for 465, false for other ports
+        auth: {
+            user: "odbo.live@gmail.com",
+            pass: "*************"
+        }
+    })
+
+    console.log("from transporter")
+
+    return transporter;
+}
  * 
  * 
  const etherialEmailClientTransporter = (user, pass) => {
