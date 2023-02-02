@@ -1,6 +1,6 @@
 const express = require("express");
 const { authenticatedUserJwtVerification } = require("../controllers/auth");
-const { getAllUsers, getAnUser, updateUser, deleteUser, acceptUserFriendRequest, rejectUserFriendRequest, removeUserFromFriendList, updateUserProfileInfo, getAnUserWithMinimumData, resetUserAccountPassword, sendOtpViaEmail } = require("../controllers/user");
+const { getAllUsers, getAnUser, updateUser, deleteUser, acceptUserFriendRequest, rejectUserFriendRequest, removeUserFromFriendList, updateUserProfileInfo, getAnUserWithMinimumData, resetUserAccountPassword, sendOtpViaEmail, verifyOtp } = require("../controllers/user");
 const { isAuthenticated } = require("./auth");
 const userRoutes = express();
 
@@ -27,5 +27,6 @@ userRoutes.put("/:userId/reject", authenticatedUserJwtVerification, rejectUserFr
 userRoutes.put("/:userId/remove", authenticatedUserJwtVerification, removeUserFromFriendList)
 
 userRoutes.post("/send-otp-code", sendOtpViaEmail)
+userRoutes.post("/verify-otp-code", verifyOtp)
 
 module.exports = userRoutes;

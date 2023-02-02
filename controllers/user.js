@@ -1,5 +1,6 @@
 const { body, validationResult } = require("express-validator");
 const async = require("async");
+const moment = require("moment");
 const otpGenerator = require("otp-generator");
 const User = require("../models/user");
 const Post = require("../models/post");
@@ -35,20 +36,61 @@ const getAnUser = (req, res, next) => {
         }).catch(err => next(err))
 }
 
-const sendOtpViaEmail = (req, res) => {
+const verifyOtp = (req, res) => {
     const otpCode = req.body.otpCode;
+    // check if token exists in body
+    if (otpCode) {
+        // check if code exists in db
+        Otp.findOne({ otp: otpCode })
+            .then(result => {
+                if (result) {
+                    // check otpCode is not verified already
+                    if (result.verified) {
+                        return res.status(403).json({ msg: "Otp code is already verified" })
+                    } else {
+                        // check if otpCode is not over expiration date
+                        if (moment(Date.now()).isBefore(result.expDate)) {
+                            console.log("otp is still vaild")
+                            // as its still valid, its safe to validate user and remove this record from db to save space
+                            Otp.findByIdAndDelete(result._id)
+                                .then(() => {
+                                    return res.status(200).json({ msg: "otp verified!!" })
+                                }).catch(err => console.log("otp deletion has failed after verify", err))
+                        } else {
+                            console.log("otp expired")
+                            // as expired theres no point in keeping this on store, so lets remove this as well
+                            Otp.findByIdAndDelete(result._id)
+                                .then(() => {
+                                    console.log("otp deleted from store")
+                                }).catch(err => console.log("otp deletion has failed after expired", err))
+                                .finally(() => {
+                                    return res.status(401).json({ msg: "Otp code has expired" })
+                                })
+                        }
+                    }
+                } else {
+                    return res.status(401).json({ msg: "Otp code is missing in store" })
+                }
+            }).catch(err => {
+                console.log("otp fetch has failed!!", err)
+                return res.status(501).json({ msg: "error occured" })
+            })
+    } else {
+        return res.status(401).json({ msg: "Otp code is missing in request" })
+    }
+}
 
+const sendOtpViaEmail = (req, res) => {
     // generate otp
     const otpPass = otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false })
     const timeNow = new Date();
-    const otpExpiration = new Date(timeNow.getTime() + 15*60000); // adding 15 mins to current time for otp expiration time limit
+    const otpExpiration = new Date(timeNow.getTime() + 15 * 60000); // adding 15 mins to current time for otp expiration time limit
     const toAddress = req.body.email;
 
-    // etherialEmailClientAgent(toAddress, otpCode)
     etherialEmailClientAgent(toAddress, otpPass)
         .then((info) => {
             console.log("message sent", info?.messageId)
-            if(info?.messageId) {
+            if (info?.messageId) {
                 // creating otp instance up in db
                 const otpInstance = new Otp({
                     otp: otpPass,
@@ -57,7 +99,7 @@ const sendOtpViaEmail = (req, res) => {
                 });
 
                 otpInstance.save((err, result) => {
-                    if(err) return res.status(400).json({msg: "otp instance saved failed"})
+                    if (err) return res.status(400).json({ msg: "otp instance saved failed" })
 
                     // sucessfully saved
                     console.log("otp saved", result)
@@ -65,8 +107,7 @@ const sendOtpViaEmail = (req, res) => {
                     res.status(200).json({ msg: "email sent", msgId: info?.messageId })
                 })
             }
-            // console.log("sent message url preview", nodemailer.getTestMessageUrl(info))
-            // res.status(200).json({ msg: "email sent", msgId: info?.messageId })
+
         }).catch(err => console.log("email couldnt be sent", err))
 }
 
@@ -355,5 +396,6 @@ module.exports = {
     deleteUser,
     getAnUserWithMinimumData,
     resetUserAccountPassword,
-    sendOtpViaEmail
+    sendOtpViaEmail,
+    verifyOtp
 }

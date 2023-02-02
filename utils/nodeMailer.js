@@ -26,9 +26,9 @@ const emailOptions = (toAddress, otpCode, fromAddress) => {
         // from: `${fromAddress}`,
         // from: `OdBo <odbo.live@gmail.com>`, // whichever account is authenticated gmail will use that address as from by default
         to: toAddress,
-        subject: "Otp Passcode",
+        subject: "Otp Passcode For OdBo",
         text: `Your OTP Passcode Is : ${otpCode}`,
-        html: `<h2>Your OTP Passcode Is : <em>${otpCode}</em> </h2>`
+        html: `<h2>Your OTP Passcode Is : <em>${otpCode}</em> </h2> \n\n <b>This OTP Is Valid For Next 15 Minutes Only</b>`
     }
     console.log("email options!!", options)
     return options
