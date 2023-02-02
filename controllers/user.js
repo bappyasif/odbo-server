@@ -1,8 +1,10 @@
 const { body, validationResult } = require("express-validator");
 const async = require("async");
+const otpGenerator = require("otp-generator");
 const User = require("../models/user");
 const Post = require("../models/post");
 const Comment = require("../models/comment");
+const Otp = require("../models/otp");
 const { generatePassword } = require("../utils/jwt");
 const { etherialEmailClientAgent } = require("../utils/nodeMailer");
 
@@ -36,13 +38,35 @@ const getAnUser = (req, res, next) => {
 const sendOtpViaEmail = (req, res) => {
     const otpCode = req.body.otpCode;
 
+    // generate otp
+    const otpPass = otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false })
+    const timeNow = new Date();
+    const otpExpiration = new Date(timeNow.getTime() + 15*60000); // adding 15 mins to current time for otp expiration time limit
     const toAddress = req.body.email;
 
-    etherialEmailClientAgent(toAddress, otpCode)
+    // etherialEmailClientAgent(toAddress, otpCode)
+    etherialEmailClientAgent(toAddress, otpPass)
         .then((info) => {
             console.log("message sent", info?.messageId)
+            if(info?.messageId) {
+                // creating otp instance up in db
+                const otpInstance = new Otp({
+                    otp: otpPass,
+                    expDate: otpExpiration,
+                    verified: false
+                });
+
+                otpInstance.save((err, result) => {
+                    if(err) return res.status(400).json({msg: "otp instance saved failed"})
+
+                    // sucessfully saved
+                    console.log("otp saved", result)
+                    // sending response back to client about email being successfully sent to address
+                    res.status(200).json({ msg: "email sent", msgId: info?.messageId })
+                })
+            }
             // console.log("sent message url preview", nodemailer.getTestMessageUrl(info))
-            res.status(200).json({ msg: "email sent", msgId: info?.messageId })
+            // res.status(200).json({ msg: "email sent", msgId: info?.messageId })
         }).catch(err => console.log("email couldnt be sent", err))
 }
 
