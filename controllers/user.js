@@ -81,34 +81,45 @@ const verifyOtp = (req, res) => {
 }
 
 const sendOtpViaEmail = (req, res) => {
-    // generate otp
-    const otpPass = otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false })
-    const timeNow = new Date();
-    const otpExpiration = new Date(timeNow.getTime() + 15 * 60000); // adding 15 mins to current time for otp expiration time limit
     const toAddress = req.body.email;
+    User.findOne({ email: toAddress })
+        .then(currentUser => {
+            if (currentUser) {
+                // generate otp
+                const otpPass = otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false })
+                const timeNow = new Date();
+                const otpExpiration = new Date(timeNow.getTime() + 15 * 60000); // adding 15 mins to current time for otp expiration time limit
 
-    etherialEmailClientAgent(toAddress, otpPass)
-        .then((info) => {
-            console.log("message sent", info?.messageId)
-            if (info?.messageId) {
-                // creating otp instance up in db
-                const otpInstance = new Otp({
-                    otp: otpPass,
-                    expDate: otpExpiration,
-                    verified: false
-                });
+                etherialEmailClientAgent(toAddress, otpPass)
+                    .then((info) => {
+                        console.log("message sent", info?.messageId)
+                        if (info?.messageId) {
+                            // creating otp instance up in db
+                            const otpInstance = new Otp({
+                                otp: otpPass,
+                                expDate: otpExpiration,
+                                verified: false
+                            });
 
-                otpInstance.save((err, result) => {
-                    if (err) return res.status(400).json({ msg: "otp instance saved failed" })
+                            otpInstance.save((err, result) => {
+                                if (err) return res.status(400).json({ msg: "otp instance saved failed" })
 
-                    // sucessfully saved
-                    console.log("otp saved", result)
-                    // sending response back to client about email being successfully sent to address
-                    res.status(200).json({ msg: "email sent", msgId: info?.messageId })
-                })
+                                // sucessfully saved
+                                console.log("otp saved", result)
+                                // sending response back to client about email being successfully sent to address
+                                res.status(200).json({ msg: "email sent", msgId: info?.messageId })
+                            })
+                        }
+
+                    }).catch(err => console.log("email couldnt be sent", err))
+            } else {
+                console.log("email is not found!!")
+                return res.status(401).json({ msg: "email provided is unrecognised" })
             }
-
-        }).catch(err => console.log("email couldnt be sent", err))
+        }).catch(err => {
+            console.log("email fetch has failed!!", err)
+            return res.status(401).json({ msg: "email fetch has failed!!" })
+        })
 }
 
 const updateUserProfileInfo = (req, res, next) => {
