@@ -46,13 +46,16 @@ const resetPasswordWithOtp = [
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            return res.status(401).json({ msg: "user input validation failed", erros: errors.array() })
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
         }
+
+        // console.log(req.body.email, req.body.password, req.body.otpCode, req.body.confirm)
 
         // lookup user in db
         User.findOne({ email: req.body.email })
             .then(foundUser => {
                 if (foundUser) {
+                    // console.log(foundUser, "foundUser!!")
                     // generating hash and salt for user login process with this new password
                     const getSaltAndHash = generatePassword(req.body.password);
                     const salt = getSaltAndHash.salt;
@@ -65,13 +68,14 @@ const resetPasswordWithOtp = [
                     // now update this in db store
                     User.findByIdAndUpdate(foundUser._id, foundUser, {})
                         .then(() => {
+                            // console.log("updated user", userUpdated)
                             // if (err) return res.status(401).json({ msg: "user update has caused an error!!" })
                             // now deleting otp from db store as well
                             Otp.findOne({ otp: req.body.otpCode })
                                 .then((result => {
-                                    if(!result) return res.status(401).json({ msg: "otp has not been found in store!!" })
+                                    if (!result) return res.status(401).json({ msg: "otp has not been found in store!!" })
 
-                                    if(!result?.verified) {
+                                    if (!result?.verified) {
                                         return res.status(401).json({ msg: "otp has not been verified yet!!" })
                                     }
 
@@ -79,12 +83,12 @@ const resetPasswordWithOtp = [
                                         .then((foundOtp) => {
                                             // console.log("otp is now deleted from db!!")
                                             // return res.status(200).json({ msg: "user account password is now set. redirect them to login page" })
-                                            if(foundOtp) {
+                                            if (foundOtp) {
                                                 // if(!foundOtp?.verified) {
                                                 //     return res.status(401).json({ msg: "otp has not been verified yet!!" })
                                                 // }
                                                 console.log("otp is now deleted from db!!")
-                                            return res.status(200).json({ msg: "user account password is now set. redirect them to login page" })
+                                                return res.status(200).json({ msg: "user account password is now set. redirect them to login page" })
                                             } else {
                                                 return res.status(401).json({ msg: "user provided otp is not found in store!!" })
                                             }
@@ -112,7 +116,7 @@ const verifyOtp = [
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            return res.status(401).json({ msg: "user input validation failed", erros: errors.array() })
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
         }
 
         const otpCode = req.body.otpCode;
