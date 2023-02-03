@@ -36,49 +36,134 @@ const getAnUser = (req, res, next) => {
         }).catch(err => next(err))
 }
 
-const verifyOtp = (req, res) => {
-    const otpCode = req.body.otpCode;
-    // check if token exists in body
-    if (otpCode) {
-        // check if code exists in db
-        Otp.findOne({ otp: otpCode })
-            .then(result => {
-                if (result) {
-                    // check otpCode is not verified already
-                    if (result.verified) {
-                        return res.status(403).json({ msg: "Otp code is already verified" })
-                    } else {
-                        // check if otpCode is not over expiration date
-                        if (moment(Date.now()).isBefore(result.expDate)) {
-                            console.log("otp is still vaild")
-                            // as its still valid, its safe to validate user and remove this record from db to save space
+const resetPasswordWithOtp = [
+    body("otpCode").exists().isNumeric().escape().isLength({ min: 6, max: 6 }),
+    body("email", "email is not valid").exists().isEmail().normalizeEmail(),
+    body("password", "password is not valid").exists().isLength({ min: 4 }),
+    body("confirm", "confirm password is invalid").exists().isLength({ min: 4 }),
+    body("confirm", "confirm password doesn't match with password").custom((val, { req }) => val === req.body.password),
+    (req, res) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(401).json({ msg: "user input validation failed", erros: errors.array() })
+        }
+
+        // lookup user in db
+        User.findOne({ email: req.body.email })
+            .then(foundUser => {
+                if (foundUser) {
+                    // generating hash and salt for user login process with this new password
+                    const getSaltAndHash = generatePassword(req.body.password);
+                    const salt = getSaltAndHash.salt;
+                    const hash = getSaltAndHash.hash;
+
+                    foundUser.hash = hash;
+                    foundUser.salt = salt;
+                    foundUser.password = req.body.password;
+
+                    // now update this in db store
+                    User.findByIdAndUpdate(foundUser._id, foundUser, {})
+                        .then(() => {
+                            // if (err) return res.status(401).json({ msg: "user update has caused an error!!" })
+                            // now deleting otp from db store as well
+                            Otp.findOne({ otp: req.body.otpCode })
+                                .then((result => {
+                                    if(!result) return res.status(401).json({ msg: "otp has not been found in store!!" })
+
+                                    if(!result?.verified) {
+                                        return res.status(401).json({ msg: "otp has not been verified yet!!" })
+                                    }
+
+                                    Otp.findByIdAndDelete(result?._id)
+                                        .then((foundOtp) => {
+                                            // console.log("otp is now deleted from db!!")
+                                            // return res.status(200).json({ msg: "user account password is now set. redirect them to login page" })
+                                            if(foundOtp) {
+                                                // if(!foundOtp?.verified) {
+                                                //     return res.status(401).json({ msg: "otp has not been verified yet!!" })
+                                                // }
+                                                console.log("otp is now deleted from db!!")
+                                            return res.status(200).json({ msg: "user account password is now set. redirect them to login page" })
+                                            } else {
+                                                return res.status(401).json({ msg: "user provided otp is not found in store!!" })
+                                            }
+                                        }).catch(err => console.log("otp deletion has failed after password reset", err))
+
+                                })).catch(err => {
+                                    console.log("otp look up failed!!", err)
+                                    res.status(401).json({ msg: "otp look up failed!!" })
+                                })
+
+                        }).catch(err => {
+                            console.log("user update has failed!!", err);
+                            return res.status(401).json({ msg: "user update has failed!!" })
+                        })
+                } else {
+                    return res.status(401).json({ msg: "user is not found!!" })
+                }
+            })
+    }
+]
+
+const verifyOtp = [
+    body("otpCode").exists().isNumeric().escape().isLength({ min: 6, max: 6 }),
+    (req, res) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(401).json({ msg: "user input validation failed", erros: errors.array() })
+        }
+
+        const otpCode = req.body.otpCode;
+        // check if token exists in body
+        if (otpCode) {
+            // check if code exists in db
+            Otp.findOne({ otp: otpCode })
+                .then(result => {
+                    if (result) {
+                        // check otpCode is not verified already
+                        if (result.verified) {
+                            // as otp is already verified and another requests coming with same id in verification process means its unwanted or malicious, so removing it altogether from store
                             Otp.findByIdAndDelete(result._id)
                                 .then(() => {
-                                    return res.status(200).json({ msg: "otp verified!!" })
+                                    return res.status(403).json({ msg: "Otp code is already verified" })
                                 }).catch(err => console.log("otp deletion has failed after verify", err))
                         } else {
-                            console.log("otp expired")
-                            // as expired theres no point in keeping this on store, so lets remove this as well
-                            Otp.findByIdAndDelete(result._id)
-                                .then(() => {
-                                    console.log("otp deleted from store")
-                                }).catch(err => console.log("otp deletion has failed after expired", err))
-                                .finally(() => {
-                                    return res.status(401).json({ msg: "Otp code has expired" })
-                                })
+                            // check if otpCode is not over expiration date
+                            if (moment(Date.now()).isBefore(result.expDate)) {
+                                console.log("otp is still vaild")
+                                // lets update its verified value so that if its been used from any other requests it shall be nullified
+                                result.verified = true;
+
+                                Otp.findByIdAndUpdate(result._id, result, {})
+                                    .then(updated => {
+                                        return res.status(200).json({ msg: "otp verified!!", otpCode: updated.otp })
+                                    }).catch(err => console.log("otp update has failed after verify", err))
+                            } else {
+                                console.log("otp expired")
+                                // as expired theres no point in keeping this on store, so lets remove this as well
+                                Otp.findByIdAndDelete(result._id)
+                                    .then(() => {
+                                        console.log("otp deleted from store")
+                                    }).catch(err => console.log("otp deletion has failed after expired", err))
+                                    .finally(() => {
+                                        return res.status(401).json({ msg: "Otp code has expired" })
+                                    })
+                            }
                         }
+                    } else {
+                        return res.status(401).json({ msg: "Otp code is missing in store" })
                     }
-                } else {
-                    return res.status(401).json({ msg: "Otp code is missing in store" })
-                }
-            }).catch(err => {
-                console.log("otp fetch has failed!!", err)
-                return res.status(501).json({ msg: "error occured" })
-            })
-    } else {
-        return res.status(401).json({ msg: "Otp code is missing in request" })
+                }).catch(err => {
+                    console.log("otp fetch has failed!!", err)
+                    return res.status(501).json({ msg: "error occured" })
+                })
+        } else {
+            return res.status(401).json({ msg: "Otp code is missing in request" })
+        }
     }
-}
+]
 
 const sendOtpViaEmail = (req, res) => {
     const toAddress = req.body.email;
@@ -408,5 +493,6 @@ module.exports = {
     getAnUserWithMinimumData,
     resetUserAccountPassword,
     sendOtpViaEmail,
-    verifyOtp
+    verifyOtp,
+    resetPasswordWithOtp
 }
