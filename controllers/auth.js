@@ -189,12 +189,15 @@ const sendUserDataAfterJwtAuthentication = (userId, res, generateTokens) => {
     User.findOne({ _id: userId })
         .then(dataset => {
             // console.log(dataset, "dataset!!")
-            if (generateTokens) {
-                const accessToken = createJwtAccessToken(dataset._id)
-                const refreshToken = createJwtRefreshToken(dataset._id);
-                return res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset, userJwt: { token: accessToken, refreshToken: refreshToken } })
-            }
-            res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
+            const accessToken = createJwtAccessToken(dataset._id)
+            const refreshToken = createJwtRefreshToken(dataset._id);
+            return res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset, userJwt: { token: accessToken, refreshToken: refreshToken } })
+            // if (generateTokens) {
+            //     const accessToken = createJwtAccessToken(dataset._id)
+            //     const refreshToken = createJwtRefreshToken(dataset._id);
+            //     return res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset, userJwt: { token: accessToken, refreshToken: refreshToken } })
+            // }
+            // res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
         }).catch(err => {
             console.log(err)
             return res.status(403).json({ msg: "response error!!" })

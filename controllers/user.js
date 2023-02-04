@@ -244,8 +244,8 @@ const updateUserProfileInfo = (req, res, next) => {
             }
 
             if (data.fullName) {
-                // currentUser.fullName = data.fullName;
-                currentUser.fullName = sanitizeContent(data.fullName);
+                currentUser.fullName = data.fullName;
+                // currentUser.fullName = sanitizeContent(data.fullName);
             }
 
             if (data.bio) {
