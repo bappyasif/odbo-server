@@ -8,6 +8,7 @@ const Comment = require("../models/comment");
 const Otp = require("../models/otp");
 const { generatePassword } = require("../utils/jwt");
 const { etherialEmailClientAgent } = require("../utils/nodeMailer");
+const { sanitizeCommentTextContent, sanitizeContent } = require("./comment");
 
 const getAllUsers = (req, res, next) => {
     User.find({})
@@ -176,7 +177,7 @@ const sendOtpViaEmail = [
         if(!errors.isEmpty()) {
             return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
         }
-        
+
         const toAddress = req.body.email;
         User.findOne({ email: toAddress })
             .then(currentUser => {
@@ -228,23 +229,28 @@ const updateUserProfileInfo = (req, res, next) => {
     User.findOne({ _id: userId })
         .then(currentUser => {
             if (data.ppUrl) {
-                currentUser.ppUrl = data.ppUrl;
+                // currentUser.ppUrl = data.ppUrl;
+                currentUser.ppUrl = sanitizeContent(data.ppUrl);
             }
 
             if (data.cpUrl) {
-                currentUser.cpUrl = data.cpUrl;
+                // currentUser.cpUrl = data.cpUrl;
+                currentUser.cpUrl = sanitizeContent(data.cpUrl);
             }
 
             if (data.topics) {
                 currentUser.topics = data.topics;
+                // currentUser.topics = sanitizeContent(data.topics);
             }
 
             if (data.fullName) {
-                currentUser.fullName = data.fullName;
+                // currentUser.fullName = data.fullName;
+                currentUser.fullName = sanitizeContent(data.fullName);
             }
 
             if (data.bio) {
-                currentUser.bio = data.bio;
+                // currentUser.bio = data.bio;
+                currentUser.bio = sanitizeContent(data.bio);
             }
 
             // console.log(currentUser, "currentuser!!")

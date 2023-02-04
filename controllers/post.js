@@ -4,6 +4,7 @@ const {JSDOM} = require("jsdom");
 const async = require("async");
 const Post = require("../models/post");
 const User = require("../models/user");
+const { sanitizeContent } = require("./comment");
 
 const getAllPosts = (req, res, next) => {
     let userId = req.params.userId;
@@ -120,17 +121,18 @@ const createNewPost = [
             return res.status(402).json({ success: false, errors: errors.array() })
         }
 
-        const sanitizeBodyHtmlContent = (val) => {
-            const window = new JSDOM("").window;
-            const DomPurify = createDomPurify(window);
-            const clean = DomPurify.sanitize(val)
-            return clean
-        }
+        // const sanitizeBodyHtmlContent = (val) => {
+        //     const window = new JSDOM("").window;
+        //     const DomPurify = createDomPurify(window);
+        //     const clean = DomPurify.sanitize(val)
+        //     return clean
+        // }
 
         // data is sanitized and validated for to be saved in databse
         let newPost = new Post({
             // body: req.body.body,
-            body: sanitizeBodyHtmlContent(req.body.body),
+            // body: sanitizeBodyHtmlContent(req.body.body),
+            body: sanitizeContent(req.body.body),
             userId: req.params.userId,
             created: new Date().toISOString(),
             privacy: req.body.Privacy,

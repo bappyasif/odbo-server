@@ -1,4 +1,6 @@
 const { body, validationResult } = require("express-validator");
+const createDomPurify = require("dompurify");
+const {JSDOM} = require("jsdom");
 const Comment = require("../models/comment");
 
 const getAllComments = (req, res, next) => {
@@ -91,28 +93,29 @@ const updateSoloCommentCounts = (req, res, next) => {
         }).catch(err=>next(err))
 }
 
+const sanitizeContent = (val) => {
+    const window = new JSDOM("").window;
+    const DomPurify = createDomPurify(window);
+    const clean = DomPurify.sanitize(val)
+    return clean
+}
+
 const createNewComment = [
     body("text", "comment body can not be left empty")
-        .trim().isLength({ min: 1 }).exists(),
+        .trim().isLength({ min: 1 }).exists().escape(),
 
     (req, res, next) => {
         let errors = validationResult(req);
         if (!errors.isEmpty()) {
+            // console.log(errors.array(), req.body.text)
             return res.status(402).json({ success: false, errors: errors.array() })
-        }
-
-        const sanitizeCommentTextContent = (val) => {
-            const window = new JSDOM("").window;
-            const DomPurify = createDomPurify(window);
-            const clean = DomPurify.sanitize(val)
-            return clean
         }
 
         // ready to be saved into database
         if (req.body.userId) {
             let newComment = new Comment({
                 // body: req.body.text,
-                body: sanitizeCommentTextContent(req.body.text),
+                body: sanitizeContent(req.body.text),
                 userId: req.body.userId,
                 postId: req.body.postId,
                 created: new Date().toISOString()
@@ -137,5 +140,6 @@ module.exports = {
     createNewComment,
     updateSoloCommentCounts,
     deleteSoloComment,
-    updateSoloCommentText
+    updateSoloCommentText,
+    sanitizeContent
 }
