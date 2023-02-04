@@ -18,7 +18,7 @@ const createJwtRefreshToken = (user) => {
     }
 
     const options = {
-        expiresIn: "1m"
+        expiresIn: "1d"
     }
 
     return jwt.sign(payload, process.env.JWT_REFRESH_TOKEN, options)

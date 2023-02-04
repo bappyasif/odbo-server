@@ -167,7 +167,7 @@ const authenticatedUserJwtVerification = (req, res, next) => {
                 const verification = verifyAccessTokenVilidity(tokenString, refreshToken)
                 req.jwt = verification;
 
-                if(verification) {
+                if (verification) {
                     next();
                 } else {
                     return res.status(401).json({ msg: "Expired token", success: false })
@@ -185,10 +185,15 @@ const authenticatedUserJwtVerification = (req, res, next) => {
     }
 }
 
-const sendUserDataAfterJwtAuthentication = (userId, res) => {
+const sendUserDataAfterJwtAuthentication = (userId, res, generateTokens) => {
     User.findOne({ _id: userId })
         .then(dataset => {
             // console.log(dataset, "dataset!!")
+            if (generateTokens) {
+                const accessToken = createJwtAccessToken(dataset._id)
+                const refreshToken = createJwtRefreshToken(dataset._id);
+                return res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset, userJwt: { token: accessToken, refreshToken: refreshToken } })
+            }
             res.status(201).json({ msg: "user data has been transported after JWT verficiation", user: dataset })
         }).catch(err => {
             console.log(err)
@@ -225,8 +230,8 @@ const extractUserFromValidToken = (req, res) => {
 
     const user = extractUserFromToken(token)
 
-    if(user?.sub) {
-        sendUserDataAfterJwtAuthentication(user?.sub, res)
+    if (user?.sub) {
+        sendUserDataAfterJwtAuthentication(user?.sub, res, "generateTokens")
     } else {
         res.status(401).json({ msg: "Invalid token" })
     }
