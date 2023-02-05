@@ -174,7 +174,7 @@ const sendOtpViaEmail = [
     body("email").exists().isEmail().normalizeEmail().escape(),
     (req, res) => {
         const errors = validationResult(req);
-        if(!errors.isEmpty()) {
+        if (!errors.isEmpty()) {
             return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
         }
 
@@ -220,50 +220,63 @@ const sendOtpViaEmail = [
     }
 ]
 
-const updateUserProfileInfo = (req, res, next) => {
-    let userId = req.params.userId;
-    let data = req.body;
+const updateUserProfileInfo = [
+    body("ppUrl").exists().isURL(),
+    body("cpUrl").exists().isURL(),
+    body("bio").exists().trim(),
+    body("fullName").exists().trim(),
+    body("topics").exists().trim(),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if(!errors.isEmpty()) {
+            console.log(errors.array(), "profile data update errors")
+            return res.status(401).json({msg: "user input validation failed", errors: errors.array()})
+        }
 
-    // console.log(data, userId, "wat wat!!")
+        let userId = req.params.userId;
+        let data = req.body;
 
-    User.findOne({ _id: userId })
-        .then(currentUser => {
-            if (data.ppUrl) {
-                // currentUser.ppUrl = data.ppUrl;
-                currentUser.ppUrl = sanitizeContent(data.ppUrl);
-            }
+        // console.log(data, userId, "wat wat!!")
 
-            if (data.cpUrl) {
-                // currentUser.cpUrl = data.cpUrl;
-                currentUser.cpUrl = sanitizeContent(data.cpUrl);
-            }
+        User.findOne({ _id: userId })
+            .then(currentUser => {
+                if (data.ppUrl) {
+                    currentUser.ppUrl = data.ppUrl;
+                    // currentUser.ppUrl = sanitizeContent(data.ppUrl);
+                }
 
-            if (data.topics) {
-                currentUser.topics = data.topics;
-                // currentUser.topics = sanitizeContent(data.topics);
-            }
+                if (data.cpUrl) {
+                    currentUser.cpUrl = data.cpUrl;
+                    // currentUser.cpUrl = sanitizeContent(data.cpUrl);
+                }
 
-            if (data.fullName) {
-                currentUser.fullName = data.fullName;
-                // currentUser.fullName = sanitizeContent(data.fullName);
-            }
+                if (data.topics) {
+                    currentUser.topics = data.topics;
+                    // currentUser.topics = sanitizeContent(data.topics);
+                }
 
-            if (data.bio) {
-                // currentUser.bio = data.bio;
-                currentUser.bio = sanitizeContent(data.bio);
-            }
+                if (data.fullName) {
+                    currentUser.fullName = data.fullName;
+                    // currentUser.fullName = sanitizeContent(data.fullName);
+                }
 
-            // console.log(currentUser, "currentuser!!")
+                if (data.bio) {
+                    // currentUser.bio = data.bio;
+                    currentUser.bio = sanitizeContent(data.bio);
+                }
 
-            User.findByIdAndUpdate(currentUser._id, currentUser, {})
-                .then(() => {
-                    console.log("user profile data updated....");
-                    res.status(200).json({ success: true, user: currentUser })
-                })
-                .catch(err => next(err))
+                // console.log(currentUser, "currentuser!!")
 
-        }).catch(err => next(err))
-}
+                User.findByIdAndUpdate(currentUser._id, currentUser, {})
+                    .then(() => {
+                        console.log("user profile data updated....");
+                        res.status(200).json({ success: true, user: currentUser })
+                    })
+                    .catch(err => next(err))
+
+            }).catch(err => next(err))
+    }
+]
 
 const updateUser = (req, res, next) => {
     User.findOne({ _id: req.params.userId })
