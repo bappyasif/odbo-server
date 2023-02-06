@@ -1,6 +1,6 @@
 const { body, validationResult, check } = require("express-validator");
 const createDomPurify = require("dompurify");
-const {JSDOM} = require("jsdom");
+const { JSDOM } = require("jsdom");
 const async = require("async");
 const Post = require("../models/post");
 const User = require("../models/user");
@@ -20,20 +20,20 @@ const getAllPrivatePostsFromFriends = (req, res, next) => {
 
     let foundPosts = [];
 
-    User.findOne({_id: userId})
+    User.findOne({ _id: userId })
         .then((dataset) => {
 
-            if(dataset.friends.length) {
+            if (dataset.friends.length) {
                 let allPromises = dataset.friends.map(val => {
-                    return Post.find({userId: val, privacy: "Friends"})
+                    return Post.find({ userId: val, privacy: "Friends" })
                 })
 
                 Promise.all(allPromises).then(results => {
                     results.forEach(item => item.length && foundPosts.push(...item))
                 }).catch(err => next(err))
-                .then(() => {
-                    res.status(200).json({status: "success", data: foundPosts})
-                })
+                    .then(() => {
+                        res.status(200).json({ status: "success", data: foundPosts })
+                    })
             }
         }).catch(err => next(err))
 }
@@ -74,7 +74,7 @@ const getAllPostsWithPublicPrivacy = (req, res, next) => {
         },
 
         (err, results) => {
-            if (err) return res.status(403).json({success:false, msg: "error occured while getting all posts from server"});
+            if (err) return res.status(403).json({ success: false, msg: "error occured while getting all posts from server" });
             res.status(200).json({ success: true, data: [...results.emptyPrivacy, ...results.everybodyPrivacy] })
         }
     )
@@ -116,7 +116,7 @@ const createNewPost = [
 
     (req, res, next) => {
         let errors = validationResult(req);
-        
+
         if (!errors.isEmpty()) {
             return res.status(402).json({ success: false, errors: errors.array() })
         }
@@ -152,78 +152,116 @@ const createNewPost = [
     }
 ]
 
-const updateSoloPost = (req, res, next) => {
-    let data = req.body;
+const updateSoloPost = [
+    body("Like").isInt().exists(),
+    body("Dislike").isInt().exists(),
+    body("Love").isInt().exists(),
+    body("Share").isInt().exists(),
+    (req, res, next) => {
+        let errors = validationResult(req);
 
-    Post.findOne({ _id: req.params.postId })
-        .then(currentPost => {
-            // updating post with data sent to server from client
-            currentPost.likesCount = data.Like,
-                currentPost.dislikesCount = data.Dislike,
-                currentPost.loveCount = data.Love,
+        if (!errors.isEmpty()) {
+            console.log("updatew solo error list", errors.array())
+            return res.status(402).json({ success: false, errors: errors.array() })
+        }
+
+        let data = req.body;
+
+        Post.findOne({ _id: req.params.postId })
+            .then(currentPost => {
+                // updating post with data sent to server from client
+                currentPost.likesCount = data.Like,
+                    currentPost.dislikesCount = data.Dislike,
+                    currentPost.loveCount = data.Love,
+                    currentPost.shareCount = data.Share
+
+                // updating post with latest post data
+                Post.findByIdAndUpdate(currentPost._id, currentPost, {})
+                    .then((currPost) => {
+                        console.log("data updated solo post!!")
+                        res.status(200).json({ success: true, posts: [] })
+                    })
+                    .catch(err => next(err))
+            }).catch(err => next(err))
+    }
+]
+
+const updateSoloPostWithSpecificData = [
+    body("propKey").exists().trim(),
+    body("propValue").exists().trim(),
+    (req, res, next) => {
+        let errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            console.log("update solo post with specific data error list", errors.array())
+            return res.status(402).json({ success: false, errors: errors.array() })
+        }
+
+        let dataBody = req.body;
+        let postId = req.params.postId;
+        // console.log(dataBody, "dataBody!!", postId)
+        Post.findOne({ _id: postId })
+            .then(currentPost => {
+                currentPost[dataBody.propKey] = dataBody.propValue
+                Post.findByIdAndUpdate(currentPost._id, currentPost, {})
+                    .then(updatedPost => {
+                        res.status(200).json({ success: true, posts: [] })
+                    }).catch(err => next(err))
+            }).catch(err => next(err))
+    }
+]
+
+const updateSoloPostWithUserEngagements = [
+    body("Like").isInt().exists(),
+    body("Dislike").isInt().exists(),
+    body("Love").isInt().exists(),
+    body("Share").isInt().exists(),
+    body("Comment").isInt().exists(),
+    (req, res, next) => {
+        let errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            console.log("update solo with engagement error list", errors.array())
+            return res.status(402).json({ success: false, errors: errors.array() })
+        }
+
+        let data = req.body;
+        // console.log(data, "!!", req.params.postId, req.params.interactingUserId, data.currentUserCounts)
+
+        Post.findOne({ _id: req.params.postId })
+            .then(currentPost => {
+                // updating post with data sent to server from client
+
+                currentPost.likesCount = data.Like;
+
+                currentPost.dislikesCount = data.Dislike;
+
+                currentPost.loveCount = data.Love
+
                 currentPost.shareCount = data.Share
 
-            // updating post with latest post data
-            Post.findByIdAndUpdate(currentPost._id, currentPost, {})
-                .then((currPost) => {
-                    console.log("data updated!!")
-                    res.status(200).json({ success: true, posts: [] })
-                })
-                .catch(err => next(err))
-        }).catch(err => next(err))
-}
+                currentPost.commentsCount = data.Comment
 
-const updateSoloPostWithSpecificData = (req, res, next) => {
-    let dataBody = req.body;
-    let postId = req.params.postId;
-    // console.log(dataBody, "dataBody!!", postId)
-    Post.findOne({ _id: postId })
-        .then(currentPost => {
-            currentPost[dataBody.propKey] = dataBody.propValue
-            Post.findByIdAndUpdate(currentPost._id, currentPost, {})
-                .then(updatedPost => {
-                    res.status(200).json({ success: true, posts: [] })
-                }).catch(err => next(err))
-        }).catch(err => next(err))
-}
+                let findIdx = currentPost.usersEngagged?.findIndex(item => Object.keys(item)[0] === req.params.interactingUserId)
 
-const updateSoloPostWithUserEngagements = (req, res, next) => {
-    let data = req.body;
-    // console.log(data, "!!", req.params.postId, req.params.interactingUserId, data.currentUserCounts)
+                if (findIdx === -1) {
+                    // console.log("check notfound!!")
+                    currentPost.usersEngagged.push({ [req.params.interactingUserId]: data.currentUserCounts })
+                } else {
+                    // console.log("check found!!")
+                    currentPost.usersEngagged[findIdx] = { [req.params.interactingUserId]: data.currentUserCounts }
+                }
 
-    Post.findOne({ _id: req.params.postId })
-        .then(currentPost => {
-            // updating post with data sent to server from client
-
-            currentPost.likesCount = data.Like;
-
-            currentPost.dislikesCount = data.Dislike;
-
-            currentPost.loveCount = data.Love
-
-            currentPost.shareCount = data.Share
-
-            currentPost.commentsCount = data.Comment
-
-            let findIdx = currentPost.usersEngagged?.findIndex(item => Object.keys(item)[0] === req.params.interactingUserId)
-
-            if (findIdx === -1) {
-                // console.log("check notfound!!")
-                currentPost.usersEngagged.push({ [req.params.interactingUserId]: data.currentUserCounts })
-            } else {
-                // console.log("check found!!")
-                currentPost.usersEngagged[findIdx] = { [req.params.interactingUserId]: data.currentUserCounts }
-            }
-
-            // updating post with latest post data
-            Post.findByIdAndUpdate(currentPost._id, currentPost, {})
-                .then((currPost) => {
-                    console.log("data updated!!")
-                    res.status(200).json({ success: true, posts: [] })
-                })
-                .catch(err => next(err))
-        }).catch(err => next(err))
-}
+                // updating post with latest post data
+                Post.findByIdAndUpdate(currentPost._id, currentPost, {})
+                    .then((currPost) => {
+                        console.log("data updated solo post user enegagements!!")
+                        res.status(200).json({ success: true, posts: [] })
+                    })
+                    .catch(err => next(err))
+            }).catch(err => next(err))
+    }
+]
 
 const deleteSoloPost = (req, res, next) => {
     Post.findByIdAndDelete({ _id: req.params.postId })
