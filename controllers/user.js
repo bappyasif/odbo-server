@@ -228,9 +228,9 @@ const updateUserProfileInfo = [
     body("topics").exists().trim(),
     (req, res, next) => {
         const errors = validationResult(req);
-        if(!errors.isEmpty()) {
+        if (!errors.isEmpty()) {
             console.log(errors.array(), "profile data update errors")
-            return res.status(401).json({msg: "user input validation failed", errors: errors.array()})
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
         }
 
         let userId = req.params.userId;
@@ -278,36 +278,47 @@ const updateUserProfileInfo = [
     }
 ]
 
-const updateUser = (req, res, next) => {
-    User.findOne({ _id: req.params.userId })
-        .then(currentUser => {
-            if (currentUser) {
-                let dynamicKey = Object.keys(req.body)[0]
-                let dynamicValue = Object.values(req.body)[0]
+const updateUser = [
+    body("topics").optional().isArray(),
+    body("frSent").optional().trim(),
+    body("frRecieved").optional().trim(),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            console.log(errors.array(), "varieties of profile data update errors")
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
+        }
+        console.log(req.body, "check check!!")
+        User.findOne({ _id: req.params.userId })
+            .then(currentUser => {
+                if (currentUser) {
+                    let dynamicKey = Object.keys(req.body)[0]
+                    let dynamicValue = Object.values(req.body)[0]
 
-                // checking if friends related values are already exists or not
-                // if so then we'll remove it, representing Undo action from client "connect" routes
+                    // checking if friends related values are already exists or not
+                    // if so then we'll remove it, representing Undo action from client "connect" routes
 
-                let chkExists = currentUser[dynamicKey].includes(dynamicValue)
+                    let chkExists = currentUser[dynamicKey].includes(dynamicValue)
 
-                if (Object.keys(req.body)[0] !== "topics") {
-                    if (chkExists) {
-                        let filtered = currentUser[dynamicKey].filter(val => val !== dynamicValue)
-                        currentUser[dynamicKey] = filtered;
+                    if (Object.keys(req.body)[0] !== "topics") {
+                        if (chkExists) {
+                            let filtered = currentUser[dynamicKey].filter(val => val !== dynamicValue)
+                            currentUser[dynamicKey] = filtered;
+                        } else {
+                            currentUser[dynamicKey].push(dynamicValue)
+                        }
                     } else {
-                        currentUser[dynamicKey].push(dynamicValue)
+                        currentUser.topics = req.body.topics;
                     }
-                } else {
-                    currentUser.topics = req.body.topics;
-                }
 
-                // now updating with new user data
-                User.findByIdAndUpdate(currentUser._id, currentUser, {})
-                    .then(() => res.status(200).json({ success: true, user: currentUser }))
-                    .catch(err => next(err));
-            }
-        }).catch(err => next(err));
-}
+                    // now updating with new user data
+                    User.findByIdAndUpdate(currentUser._id, currentUser, {})
+                        .then(() => res.status(200).json({ success: true, user: currentUser }))
+                        .catch(err => next(err));
+                }
+            }).catch(err => next(err));
+    }
+]
 
 const resetUserAccountPassword = [
     body("current-password", "can not be empty").isLength({ min: 1 }).escape(),
@@ -415,102 +426,129 @@ const deleteUser = (req, res, next) => {
 //         }).catch(err => next(err))
 // }
 
-const acceptUserFriendRequest = (req, res, next) => {
-    let friendId = req.body.accept
-    let userId = req.params.userId
-    User.findOne({ _id: userId })
-        .then(currentUser => {
-            if (currentUser) {
-                let filter = currentUser.frRecieved.filter(id => id !== friendId)
-
-                currentUser.frRecieved = filter;
-
-                currentUser.friends.push(friendId)
-
-                User.findOne({ _id: friendId })
-                    .then(friendUser => {
-                        if (friendUser) {
-                            let filter = friendUser.frSent.filter(id => id !== userId)
-                            friendUser.frSent = filter;
-                            friendUser.friends.push(userId);
-
-                            User.findByIdAndUpdate(friendUser._id, friendUser, {})
-                                .then(() => console.log("inside friend user update call successfull from accept"))
-                                .catch(err => next(err))
-                        }
-                    })
-
-                User.findByIdAndUpdate(currentUser._id, currentUser, {})
-                    .then(() => res.status(200).json({ success: true, user: currentUser }))
-                    .catch(err => next(err));
-            }
-        }).catch(err => next(err));
-}
-
-const rejectUserFriendRequest = (req, res, next) => {
-    let friendId = req.body.reject
-    let userId = req.params.userId
-    User.findOne({ _id: userId })
-        .then(currentUser => {
-            if (currentUser) {
-                let filter = currentUser.frRecieved.filter(id => id !== friendId)
-                currentUser.frRecieved = filter;
-
-                User.findOne({ _id: friendId })
-                    .then(friendUser => {
-                        if (friendUser) {
-                            let filter = friendUser.frSent.filter(id => id !== userId)
-                            friendUser.frSent = filter;
-
-                            User.findByIdAndUpdate(friendUser._id, friendUser, {})
-                                .then(() => console.log("inside friend user update call successfull from reject"))
-                                .catch(err => next(err))
-                        }
-                    })
-
-                User.findByIdAndUpdate(currentUser._id, currentUser, {})
-                    .then(() => res.status(200).json({ success: true, user: currentUser }))
-                    .catch(err => next(err));
-            }
-        }).catch(err => next(err));
-}
-
-let removeUserFromFriendList = (req, res, next) => {
-    let friendId = req.body.friendId
-    let userId = req.params.userId;
-
-    async.parallel(
-        {
-            currentUser(cb) {
-                User.findOne({ _id: userId }).exec(cb)
-            },
-            friendUser(cb) {
-                User.findOne({ _id: friendId }).exec(cb)
-            }
-        },
-        (err, results) => {
-            if (err) return next(err);
-
-            let filterCurrentUserFriendsArray = results.currentUser.friends.filter(val => val !== friendId);
-            results.currentUser.friends = filterCurrentUserFriendsArray;
-
-            let filterFriendUserFriendsArray = results.friendUser.friends.filter(val => val !== userId)
-            results.friendUser.friends = filterFriendUserFriendsArray;
-
-            // console.log(results.currentUser.friends, "filteredFriendsArray", results.friendUser.friends)
-
-            User.findByIdAndUpdate(userId, results.currentUser, {})
-                .then(() => console.log("current user friends list is updated"))
-                .catch(err => next(err))
-
-            User.findByIdAndUpdate(friendId, results.friendUser, {})
-                .then(() => console.log("friend user friends list is updated"))
-                .catch(err => next(err))
-
-            res.status(200).json({ success: true, data: [] })
+const acceptUserFriendRequest = [
+    body("accept").exists().trim(),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            console.log(errors.array(), "accept friend request error")
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
         }
-    )
-}
+
+        let friendId = req.body.accept
+        let userId = req.params.userId
+        User.findOne({ _id: userId })
+            .then(currentUser => {
+                if (currentUser) {
+                    let filter = currentUser.frRecieved.filter(id => id !== friendId)
+
+                    currentUser.frRecieved = filter;
+
+                    currentUser.friends.push(friendId)
+
+                    User.findOne({ _id: friendId })
+                        .then(friendUser => {
+                            if (friendUser) {
+                                let filter = friendUser.frSent.filter(id => id !== userId)
+                                friendUser.frSent = filter;
+                                friendUser.friends.push(userId);
+
+                                User.findByIdAndUpdate(friendUser._id, friendUser, {})
+                                    .then(() => console.log("inside friend user update call successfull from accept"))
+                                    .catch(err => next(err))
+                            }
+                        })
+
+                    User.findByIdAndUpdate(currentUser._id, currentUser, {})
+                        .then(() => res.status(200).json({ success: true, user: currentUser }))
+                        .catch(err => next(err));
+                }
+            }).catch(err => next(err));
+    }
+]
+
+const rejectUserFriendRequest = [
+    body("reject").exists().trim(),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            console.log(errors.array(), "reject friend request error")
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
+        }
+
+        let friendId = req.body.reject
+        let userId = req.params.userId
+        User.findOne({ _id: userId })
+            .then(currentUser => {
+                if (currentUser) {
+                    let filter = currentUser.frRecieved.filter(id => id !== friendId)
+                    currentUser.frRecieved = filter;
+    
+                    User.findOne({ _id: friendId })
+                        .then(friendUser => {
+                            if (friendUser) {
+                                let filter = friendUser.frSent.filter(id => id !== userId)
+                                friendUser.frSent = filter;
+    
+                                User.findByIdAndUpdate(friendUser._id, friendUser, {})
+                                    .then(() => console.log("inside friend user update call successfull from reject"))
+                                    .catch(err => next(err))
+                            }
+                        })
+    
+                    User.findByIdAndUpdate(currentUser._id, currentUser, {})
+                        .then(() => res.status(200).json({ success: true, user: currentUser }))
+                        .catch(err => next(err));
+                }
+            }).catch(err => next(err));
+    }
+]
+
+let removeUserFromFriendList = [
+    body("friendId").exists().trim(),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            console.log(errors.array(), "remove friend request error")
+            return res.status(401).json({ msg: "user input validation failed", errors: errors.array() })
+        }
+
+        let friendId = req.body.friendId
+        let userId = req.params.userId;
+    
+        async.parallel(
+            {
+                currentUser(cb) {
+                    User.findOne({ _id: userId }).exec(cb)
+                },
+                friendUser(cb) {
+                    User.findOne({ _id: friendId }).exec(cb)
+                }
+            },
+            (err, results) => {
+                if (err) return next(err);
+    
+                let filterCurrentUserFriendsArray = results.currentUser.friends.filter(val => val !== friendId);
+                results.currentUser.friends = filterCurrentUserFriendsArray;
+    
+                let filterFriendUserFriendsArray = results.friendUser.friends.filter(val => val !== userId)
+                results.friendUser.friends = filterFriendUserFriendsArray;
+    
+                // console.log(results.currentUser.friends, "filteredFriendsArray", results.friendUser.friends)
+    
+                User.findByIdAndUpdate(userId, results.currentUser, {})
+                    .then(() => console.log("current user friends list is updated"))
+                    .catch(err => next(err))
+    
+                User.findByIdAndUpdate(friendId, results.friendUser, {})
+                    .then(() => console.log("friend user friends list is updated"))
+                    .catch(err => next(err))
+    
+                res.status(200).json({ success: true, data: [] })
+            }
+        )
+    }
+]
 
 module.exports = {
     updateUserProfileInfo,
