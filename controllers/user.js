@@ -225,7 +225,7 @@ const updateUserProfileInfo = [
     body("cpUrl").exists().isURL(),
     body("bio").exists().trim(),
     body("fullName").exists().trim(),
-    body("topics").exists().trim(),
+    body("topics").exists().isArray(),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -405,15 +405,16 @@ const deleteUser = (req, res, next) => {
             }
         },
         (err, results) => {
-            if (err) return next(err)
+            if (err) return res.status(401).json({ msg: "error occured", errors: err, success: false }) 
 
             console.log("DELETED POSTS AND COMMENTS FROM THIS USER")
 
             User.findByIdAndDelete({ _id: userId })
-                .then(err => {
-                    if (err) return next(err);
-                    res.status(200).json({ success: true, msg: "user has been deleted" })
-                }).catch(err => next(err))
+                .then(() => {
+                    // if (err) return res.status(402).json({ msg: "error occured", errors: err })
+                    console.log("DELETED USER!!")
+                    return res.status(200).json({ success: true, msg: "user has been deleted" })
+                }).catch(err => res.status(402).json({ msg: "error occured", errors: err, success: false }))
         }
     )
 }
