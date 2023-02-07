@@ -205,7 +205,7 @@ const updateSoloPostWithSpecificData = [
                 currentPost[dataBody.propKey] = dataBody.propValue
                 Post.findByIdAndUpdate(currentPost._id, currentPost, {})
                     .then(updatedPost => {
-                        res.status(200).json({ success: true, posts: [] })
+                        return res.status(200).json({ success: true, posts: [], updatedPost: updatedPost }) 
                     }).catch(err => next(err))
             }).catch(err => next(err))
     }
@@ -256,7 +256,7 @@ const updateSoloPostWithUserEngagements = [
                 Post.findByIdAndUpdate(currentPost._id, currentPost, {})
                     .then((currPost) => {
                         console.log("data updated solo post user enegagements!!")
-                        res.status(200).json({ success: true, posts: [] })
+                        res.status(200).json({ success: true, posts: [], currPost: currPost })
                     })
                     .catch(err => next(err))
             }).catch(err => next(err))

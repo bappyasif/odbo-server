@@ -402,7 +402,14 @@ const deleteUser = (req, res, next) => {
             },
             deleteUserCreatedComments(cb) {
                 Comment.deleteMany({ userId: userId }).exec(cb)
-            }
+            },
+            // looking into how to remove deleted user existing footprints from dataset
+            // removeUserFromRecievedFriendRequests(cb) {
+            //     User.updateMany(
+            //         {},
+            //         {$pull: {frRecieved: userId}}
+            //     ).exec(cb)
+            // }
         },
         (err, results) => {
             if (err) return res.status(401).json({ msg: "error occured", errors: err, success: false }) 
