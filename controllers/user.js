@@ -410,11 +410,49 @@ const deleteUser = (req, res, next) => {
             //         {$pull: {frRecieved: userId}}
             //     ).exec(cb)
             // }
+            // removeUserFromRecievedFriendRequests(cb) {
+            //     User.find(
+            //         // {}
+            //         // {frRecieved: {$all: [userId]}},
+            //         // {frRecieved: userId},
+            //         // {frRecieved: "63824a6fdd546c422fccd4a0"},
+            //         // {frSent: "63e1103d8acf5be0547a7508"},
+            //         // {frRecieved: "63e1103d8acf5be0547a7508"},
+            //         {frRecieved: `${userId}`},
+            //     ).exec(cb)
+            // }
+            // removeUserFromRecievedFriendRequests(cb) {
+            //     User.find(
+            //         {_id: userId}
+            //     ).exec(cb)
+            // }
+            // removeUserFromRecievedFriendRequests(cb) {
+            //     User.find(
+            //         {},
+            //         {frRecieved: userId}
+            //     ).exec(cb)
+            // }
+            // removeUserFromRecievedFriendRequests(cb) {
+            //     User.find(
+            //         {frRecieved: userId}
+            //     ).exec(cb)
+            // }
+            removeUserFromRecievedFriendRequests(cb) {
+                User.updateMany(
+                    // {frRecieved: {$pull: userId}}
+                    {},
+                    {$pull: {frRecieved: userId}}
+                    ).exec(cb)
+            }
         },
         (err, results) => {
             if (err) return res.status(401).json({ msg: "error occured", errors: err, success: false }) 
 
-            console.log("DELETED POSTS AND COMMENTS FROM THIS USER")
+            // console.log(userId, "DELETED POSTS AND COMMENTS FROM THIS USER", results.removeUserFromRecievedFriendRequests)
+
+            // return res.status(200).json({ success: true, msg: "user has been deleted" })
+
+            console.log(userId, "DELETED POSTS AND COMMENTS FROM THIS USER")
 
             User.findByIdAndDelete({ _id: userId })
                 .then(() => {
