@@ -34,10 +34,12 @@ let findOrCreateuser = (profileName, profileId, userData, done) => {
 }
 
 passport.serializeUser((user, done) => {
+    // console.log(user, "Serialize")
     done(null, user.id)
 })
 
 passport.deserializeUser((id, done) => {
+    // console.log(id, "De-Serialize")
     User.findById(id).then(user => {
         done(null, user)
     })
@@ -74,6 +76,8 @@ let strategyOptions = {
 let strategyCallback = (accessToken, refreshToken, profileData, done) => {
     let uId = profileData.id
     let userData = strategyUserDataGenerations(profileData, "profileID")
+
+    // console.log(accessToken, refreshToken, "GS Callback")
 
     findOrCreateuser("profileID", uId, userData, done)
 }

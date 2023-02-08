@@ -403,40 +403,12 @@ const deleteUser = (req, res, next) => {
             deleteUserCreatedComments(cb) {
                 Comment.deleteMany({ userId: userId }).exec(cb)
             },
+            // findUsersWithThisUserInTheirRecievedFriendRequestsList(cb) {
+            //     User.find(
+            //         {frRecieved: userId}
+            //     ).exec(cb)
+            // }
             // looking into how to remove deleted user existing footprints from dataset
-            // removeUserFromRecievedFriendRequests(cb) {
-            //     User.updateMany(
-            //         {},
-            //         {$pull: {frRecieved: userId}}
-            //     ).exec(cb)
-            // }
-            // removeUserFromRecievedFriendRequests(cb) {
-            //     User.find(
-            //         // {}
-            //         // {frRecieved: {$all: [userId]}},
-            //         // {frRecieved: userId},
-            //         // {frRecieved: "63824a6fdd546c422fccd4a0"},
-            //         // {frSent: "63e1103d8acf5be0547a7508"},
-            //         // {frRecieved: "63e1103d8acf5be0547a7508"},
-            //         {frRecieved: `${userId}`},
-            //     ).exec(cb)
-            // }
-            // removeUserFromRecievedFriendRequests(cb) {
-            //     User.find(
-            //         {_id: userId}
-            //     ).exec(cb)
-            // }
-            // removeUserFromRecievedFriendRequests(cb) {
-            //     User.find(
-            //         {},
-            //         {frRecieved: userId}
-            //     ).exec(cb)
-            // }
-            // removeUserFromRecievedFriendRequests(cb) {
-            //     User.find(
-            //         {frRecieved: userId}
-            //     ).exec(cb)
-            // }
             removeUserFromRecievedFriendRequests(cb) {
                 User.updateMany(
                     // {frRecieved: {$pull: userId}}
@@ -447,10 +419,6 @@ const deleteUser = (req, res, next) => {
         },
         (err, results) => {
             if (err) return res.status(401).json({ msg: "error occured", errors: err, success: false }) 
-
-            // console.log(userId, "DELETED POSTS AND COMMENTS FROM THIS USER", results.removeUserFromRecievedFriendRequests)
-
-            // return res.status(200).json({ success: true, msg: "user has been deleted" })
 
             console.log(userId, "DELETED POSTS AND COMMENTS FROM THIS USER")
 

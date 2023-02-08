@@ -136,11 +136,18 @@ let loginOauthProviderCallback = (req, res) => {
 }
 
 const returnAuthenticatedUser = (req, res, next) => {
+    // console.log(req.user, req.sub, "<check check>", req?.session?.passport?.user)
     if (req.user) {
         // issuing jwt signed token for authentication
-        const jwt = issueJWT(req.user);
+        // const jwt = issueJWT(req.user);
+        
+        // res.status(200).json({ success: true, data: req.user, cookies: req.cookies, jwt: req?.jwt, userJwt: { token: jwt.token, expiresIn: jwt.expires } })
 
-        res.status(200).json({ success: true, data: req.user, cookies: req.cookies, jwt: req?.jwt, userJwt: { token: jwt.token, expiresIn: jwt.expires } })
+        // issuing jwt tokens after authentication and will be used for any subsequent authorizations
+        const accessToken = createJwtAccessToken(req.user)
+        const refreshToken = createJwtRefreshToken(req.user);
+
+        res.status(200).json({ success: true, data: req.user, userJwt: { token: accessToken, refreshToken: refreshToken } })
     } else {
         res.status(401).json({ success: false, msg: "user not logged in" })
     }
