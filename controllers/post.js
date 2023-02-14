@@ -205,7 +205,7 @@ const updateSoloPostWithSpecificData = [
                 currentPost[dataBody.propKey] = dataBody.propValue
                 Post.findByIdAndUpdate(currentPost._id, currentPost, {})
                     .then(updatedPost => {
-                        return res.status(200).json({ success: true, posts: [], updatedPost: updatedPost }) 
+                        return res.status(200).json({ success: true, posts: [], updatedPost: updatedPost })
                     }).catch(err => next(err))
             }).catch(err => next(err))
     }
@@ -264,13 +264,34 @@ const updateSoloPostWithUserEngagements = [
 ]
 
 const deleteSoloPost = (req, res, next) => {
-    Post.findByIdAndDelete({ _id: req.params.postId })
-        .then(() => {
-            console.log("post is now deleted");
-            res.status(200).json({ success: true, data: "post is now deleted" })
+    Post.find({ includedSharedPostId: req.params.postId }).
+        then(foundPosts => {
+            // console.log("outside posts!!")
+            foundPosts.forEach(post => {
+                // console.log("inside post!!")
+                post.includedSharedPostId = "post deleted"
+                Post.findByIdAndUpdate(post._id, post, {})
+                    .then(() => console.log("includedSharedPostID updated"))
+                    .catch(err => res.status(402).json({ success: false, msg: "shared post update failed while deleting!!" }))
+                Post.findByIdAndDelete({ _id: req.params.postId })
+                    .then(() => {
+                        // console.log("post is now deleted", includedSharedPostId);
+                        return res.status(200).json({ success: true, data: "post is now deleted" })
+                    })
+                    .catch(err => res.status(402).json({ success: false, msg: "delete failed!!" }))
+            })
         })
-        .catch(err => next(err))
+    // res.status(200).json({ success: true, data: "post is now deleted" })
 }
+
+// const deleteSoloPost = (req, res, next) => {
+//     Post.findByIdAndDelete({ _id: req.params.postId })
+//         .then(() => {
+//             console.log("post is now deleted", includedSharedPostId);
+//             res.status(200).json({ success: true, data: "post is now deleted" })
+//         })
+//         .catch(err => next(err))
+// }
 
 module.exports = {
     getAllPosts,
