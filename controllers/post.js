@@ -15,14 +15,28 @@ const getAllPosts = (req, res, next) => {
         }).catch(err => next(err))
 }
 
+const getCurrentUserCreatedPrivatePosts = (req, res) => {
+    const userId = req.params.userId;
+    // private posts by this current user
+    Post.find({userId: userId, privacy: "Friends"})
+    .then(results => {
+        if(results.length) {
+            res.status(200).json({success: true, msg: "current user created all private posts", privatePosts: results})
+        }
+    }).catch(err => {
+        console.log("current user private posts fetch failed", err);
+        res.status(402).json({success: false, msg: "private posts fetching failed!!"})
+    })
+}
+
 const getAllPrivatePostsFromFriends = (req, res, next) => {
     let userId = req.params.userId;
 
     let foundPosts = [];
 
     User.findOne({ _id: userId })
-        .then((dataset) => {
-
+        .then((dataset) => {            
+            // private posts from this current user friends
             if (dataset.friends.length) {
                 let allPromises = dataset.friends.map(val => {
                     return Post.find({ userId: val, privacy: "Friends" })
@@ -32,6 +46,7 @@ const getAllPrivatePostsFromFriends = (req, res, next) => {
                     results.forEach(item => item.length && foundPosts.push(...item))
                 }).catch(err => next(err))
                     .then(() => {
+                        console.log(foundPosts, "inside - II")
                         res.status(200).json({ status: "success", data: foundPosts })
                     })
             }
@@ -303,5 +318,6 @@ module.exports = {
     getAllPostsWithPublicPrivacy,
     updateSoloPostWithSpecificData,
     getAllSpecificActionTypesPosts,
-    getAllPrivatePostsFromFriends
+    getAllPrivatePostsFromFriends,
+    getCurrentUserCreatedPrivatePosts
 }

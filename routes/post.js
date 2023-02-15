@@ -1,11 +1,12 @@
 const express = require("express");
 const { authenticatedUserJwtVerification } = require("../controllers/auth");
-const { getAllPosts, getSoloPost, createNewPost, updateSoloPost, deleteSoloPost, updateSoloPostWithUserEngagements, getAllPostsWithPublicPrivacy, updateSoloPostWithSpecificData, getAllSpecificActionTypesPosts, getAllPrivatePostsFromFriends } = require("../controllers/post");
+const { getAllPosts, getSoloPost, createNewPost, updateSoloPost, deleteSoloPost, updateSoloPostWithUserEngagements, getAllPostsWithPublicPrivacy, updateSoloPostWithSpecificData, getAllSpecificActionTypesPosts, getAllPrivatePostsFromFriends, getCurrentUserCreatedPrivatePosts } = require("../controllers/post");
 const postRoutes = express();
 
 postRoutes.get("/", getAllPostsWithPublicPrivacy)
 // postRoutes.get("/:userId/friends/posts/private", getAllPrivatePostsFromFriends)
 postRoutes.get("/:userId/friends/posts/private", authenticatedUserJwtVerification, getAllPrivatePostsFromFriends)
+postRoutes.get("/:userId/private", authenticatedUserJwtVerification, getCurrentUserCreatedPrivatePosts)
 
 // postRoutes.get("/:userId", getAllPosts)
 postRoutes.get("/:userId", authenticatedUserJwtVerification, getAllPosts)
