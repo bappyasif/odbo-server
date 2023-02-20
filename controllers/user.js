@@ -458,13 +458,19 @@ const acceptUserFriendRequest = [
 
                     currentUser.frRecieved = filter;
 
+                    currentUser.friendships = {...currentUser.friendships, [friendId]: new Date().toISOString()}
+
                     currentUser.friends.push(friendId)
 
                     User.findOne({ _id: friendId })
                         .then(friendUser => {
                             if (friendUser) {
                                 let filter = friendUser.frSent.filter(id => id !== userId)
+                                
                                 friendUser.frSent = filter;
+
+                                friendUser.friendships = {...friendUser.friendships, [userId]: new Date().toISOString()}
+                                
                                 friendUser.friends.push(userId);
 
                                 User.findByIdAndUpdate(friendUser._id, friendUser, {})
@@ -547,6 +553,14 @@ let removeUserFromFriendList = [
     
                 let filterFriendUserFriendsArray = results.friendUser.friends.filter(val => val !== userId)
                 results.friendUser.friends = filterFriendUserFriendsArray;
+
+                const filterCurrentUserFriendshipArray = results.currentUser.friendships.filter(item => Object.keys(item)[0] !== friendId)
+                results.currentUser.friendships = filterCurrentUserFriendshipArray
+
+                const filterFriendUserFriendshipArray = results.friendUser.friendships.filter(item => Object.keys(item)[0] !== userId)
+                results.friendUser.friendships = filterFriendUserFriendshipArray
+
+                // console.log(filterCurrentUserFriendshipArray, filterFriendUserFriendshipArray);
     
                 // console.log(results.currentUser.friends, "filteredFriendsArray", results.friendUser.friends)
     

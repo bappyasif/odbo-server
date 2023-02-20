@@ -16,6 +16,7 @@ const User = new Schema({
     friends: Schema.Types.Array,
     frSent: Schema.Types.Array,
     frRecieved: Schema.Types.Array,
+    friendships: Schema.Types.Array,
     ppBuffer: Schema.Types.Buffer,
     ppUrl: Schema.Types.String,
     cpBuffer: Schema.Types.Buffer,
